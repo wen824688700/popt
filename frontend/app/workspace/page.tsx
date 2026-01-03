@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import EditorPanel from '@/components/EditorPanel';
 import OutputTabs from '@/components/OutputTabs';
 import MarkdownTab from '@/components/MarkdownTab';
@@ -14,6 +15,7 @@ interface Version {
 }
 
 export default function WorkspacePage() {
+  const router = useRouter();
   const [outputContent, setOutputContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [versions, setVersions] = useState<Version[]>([]);
@@ -147,11 +149,49 @@ export default function WorkspacePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-cyan-50/30">
+      {/* 顶部导航 */}
+      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+        <div className="px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* 左侧 Logo */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-purple-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="text-xl font-bold text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>
+                Prompt Optimizer
+              </span>
+            </div>
+
+            {/* 右侧按钮组 */}
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push('/')}
+                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span className="font-medium">首页</span>
+              </button>
+              <button
+                onClick={() => router.push('/account')}
+                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-medium rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300"
+              >
+                登录 / 注册
+              </button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Desktop: 5:5 split layout, Mobile: stacked layout */}
-      <div className="flex flex-col lg:flex-row h-screen">
+      <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
         {/* Left Editor Panel - 50% on desktop */}
-        <div className="w-full lg:w-1/2 border-r border-gray-200 bg-white">
+        <div className="w-full lg:w-1/2 border-r border-gray-200/50 bg-white/80 backdrop-blur-sm">
           <EditorPanel
             initialContent={editorContent}
             onRegenerate={handleRegenerate}
@@ -160,7 +200,7 @@ export default function WorkspacePage() {
         </div>
 
         {/* Right Output Panel - 50% on desktop */}
-        <div className="w-full lg:w-1/2 bg-white">
+        <div className="w-full lg:w-1/2 bg-white/80 backdrop-blur-sm">
           <OutputTabs tabs={tabs} defaultTab="markdown" />
         </div>
       </div>
