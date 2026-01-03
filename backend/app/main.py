@@ -1,6 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import os
+import logging
+
+# 配置日志
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+# 导入路由
+from app.api import frameworks, prompts, quota, versions
 
 app = FastAPI(
     title="Prompt Optimizer API",
@@ -13,6 +22,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
+        "http://localhost:3001",
+        "http://localhost:3002",
         "https://384866.xyz",
         "https://www.384866.xyz"
     ],
@@ -21,9 +32,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 注册路由
+app.include_router(frameworks.router)
+app.include_router(prompts.router)
+app.include_router(quota.router)
+app.include_router(versions.router)
+
 @app.get("/")
 async def root():
-    return {"message": "Prompt Optimizer API"}
+    return {
+        "message": "Prompt Optimizer API",
+        "version": "0.1.0",
+        "docs": "/docs"
+    }
 
 @app.get("/health")
 async def health_check():

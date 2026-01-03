@@ -1,0 +1,14 @@
+# FastAPI and server
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Data validation
+pydantic
+pydantic-settings
+
+# HTTP client
+httpx
+
+# Environment
+python-dotenv

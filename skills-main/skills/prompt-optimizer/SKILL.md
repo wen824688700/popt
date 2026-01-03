@@ -1,10 +1,3 @@
----
-name: prompt-optimizer
-description: Prompt engineering expert that helps users craft optimized prompts using 57 proven frameworks. Use when users want to optimize prompts, improve AI instructions, create better prompts for specific tasks, or need help selecting the best prompt framework for their use case.
-license: LICENSE-CC-BY-NC-SA 4.0 in LICENSE.txt
-anthor: 悟鸣
----
-
 # Prompt Optimizer
 
 A comprehensive prompt engineering skill that helps users craft high-quality, effective prompts using proven frameworks.

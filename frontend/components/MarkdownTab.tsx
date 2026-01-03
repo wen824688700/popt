@@ -1,0 +1,103 @@
+'use client';
+
+import { useState } from 'react';
+
+interface MarkdownTabProps {
+  content: string;
+  onModify: (content: string) => void;
+  onSave: (content: string) => void;
+}
+
+export default function MarkdownTab({ content, onModify, onSave }: MarkdownTabProps) {
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [showModifyHint, setShowModifyHint] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setShowCopiedToast(true);
+      setTimeout(() => setShowCopiedToast(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy:', error);
+    }
+  };
+
+  const handleModify = () => {
+    onModify(content);
+    setShowModifyHint(true);
+    setTimeout(() => setShowModifyHint(false), 5000);
+  };
+
+  const handleSave = () => {
+    onSave(content);
+  };
+
+  return (
+    <div className="h-full flex flex-col">
+      {/* Action Buttons */}
+      <div className="p-4 border-b border-gray-200 flex gap-2">
+        <button
+          onClick={handleCopy}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+          复制
+        </button>
+        <button
+          onClick={handleModify}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          修改
+        </button>
+        <button
+          onClick={handleSave}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+          </svg>
+          保存
+        </button>
+      </div>
+
+      {/* Modify Hint */}
+      {showModifyHint && (
+        <div className="px-4 py-2 bg-blue-50 border-b border-blue-100">
+          <p className="text-sm text-gray-600">
+            已将优化后的 Prompt 放入左侧，你可以直接编辑，或在末尾追加修改要求。
+          </p>
+        </div>
+      )}
+
+      {/* Markdown Content */}
+      <div className="flex-1 p-6 overflow-auto">
+        {content ? (
+          <div className="prose max-w-none">
+            <pre className="whitespace-pre-wrap font-mono text-sm bg-gray-50 p-4 rounded-lg">
+              {content}
+            </pre>
+          </div>
+        ) : (
+          <p className="text-gray-400 text-center mt-8">
+            优化后的提示词将显示在这里...
+          </p>
+        )}
+      </div>
+
+      {/* Copied Toast */}
+      {showCopiedToast && (
+        <div className="fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg flex items-center gap-2 animate-fade-in">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+          已复制
+        </div>
+      )}
+    </div>
+  );
+}

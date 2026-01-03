@@ -16,19 +16,19 @@
 
 ## 前端开发阶段
 
-- [ ] 2. 实现首页组件（Requirement 1 & 2）
-  - [ ] 2.1 创建 HomePage 基础布局
+- [x] 2. 实现首页组件（Requirement 1 & 2）
+  - [x] 2.1 创建 HomePage 基础布局
     - 实现响应式容器（桌面全宽，移动单列）
     - 使用 Tailwind CSS 实现极简风格
     - _Requirements: 1.1, 1.2, 1.5, 1.6_
   
-  - [ ] 2.2 实现模型选择组件
+  - [x] 2.2 实现模型选择组件
     - 创建 ModelSelector 下拉菜单
     - 初期仅显示 DeepSeek 选项
     - 实现选择状态保存
     - _Requirements: 2.1, 2.2, 2.3_
   
-  - [ ] 2.3 实现附件上传组件
+  - [x] 2.3 实现附件上传组件
     - 创建 AttachmentUploader 组件
     - 实现文件选择对话框
     - 验证文件类型（.txt, .md, .pdf）
@@ -36,31 +36,31 @@
     - 显示文件名和删除按钮
     - _Requirements: 2.4, 2.5, 2.6_
   
-  - [ ] 2.4 实现输入框组件
+  - [x] 2.4 实现输入框组件
     - 创建 InputTextarea 组件
     - 实现最少 10 字符验证
     - 显示字符计数
     - _Requirements: 3.1_
   
-  - [ ] 2.5 实现优化按钮
+  - [x] 2.5 实现优化按钮
     - 创建 OptimizeButton 组件
     - 实现加载状态
     - 实现点击事件处理
     - _Requirements: 3.2_
 
-- [ ] 3. 实现框架选择弹窗（Requirement 3 & 4）
-  - [ ] 3.1 创建 ClarificationModal 组件
+- [x] 3. 实现框架选择弹窗（Requirement 3 & 4）
+  - [x] 3.1 创建 ClarificationModal 组件
     - 实现模态框基础结构
     - 实现打开/关闭动画
     - _Requirements: 3.6, 3.7, 4.1_
   
-  - [ ] 3.2 实现框架选择器（多候选情况）
+  - [x] 3.2 实现框架选择器（多候选情况）
     - 创建 FrameworkSelector 组件
     - 显示 1-3 个框架候选
     - 实现单选逻辑
     - _Requirements: 3.5, 3.7_
   
-  - [ ] 3.3 实现追问问题表单
+  - [x] 3.3 实现追问问题表单
     - 创建 5 个标准问题输入框
     - 目标清晰度（Goal Clarity）
     - 目标受众（Target Audience）
@@ -69,36 +69,36 @@
     - 约束条件（Constraints）
     - _Requirements: 4.2_
   
-  - [ ] 3.4 实现表单验证
+  - [x] 3.4 实现表单验证
     - 标记必填字段
     - 实现提交验证
     - 显示验证错误
     - _Requirements: 4.3, 4.4_
   
-  - [ ] 3.5 实现提交和取消按钮
+  - [x] 3.5 实现提交和取消按钮
     - 实现生成按钮（关闭弹窗，显示进度条）
     - 实现取消按钮（关闭弹窗，返回首页）
     - _Requirements: 4.5, 4.6_
 
-- [ ] 4. 实现工作台页面（Requirement 5 & 6）
-  - [ ] 4.1 创建 Workspace 基础布局
+- [x] 4. 实现工作台页面（Requirement 5 & 6）
+  - [x] 4.1 创建 Workspace 基础布局
     - 实现 5:5 左右分栏布局（桌面）
     - 实现上下布局（移动）
     - _Requirements: 1.7, 5.4_
   
-  - [ ] 4.2 实现左侧编辑区
+  - [x] 4.2 实现左侧编辑区
     - 创建 EditorPanel 组件
     - 实现可编辑输入框
     - 实现本地草稿自动保存
     - 实现重新生成按钮
     - _Requirements: 6.1, 6.2_
   
-  - [ ] 4.3 实现右侧选项卡容器
+  - [x] 4.3 实现右侧选项卡容器
     - 创建 OutputTabs 组件
     - 实现两个选项卡切换
     - _Requirements: 5.5_
   
-  - [ ] 4.4 实现 Markdown 原文选项卡
+  - [x] 4.4 实现 Markdown 原文选项卡
     - 创建 MarkdownTab 组件
     - 实现 Markdown 渲染
     - 实现复制按钮（复制到剪贴板，显示提示 2 秒）
@@ -107,7 +107,7 @@
     - 显示灰字提示
     - _Requirements: 5.6, 5.7, 5.8, 5.9, 5.10, 5.11_
   
-  - [ ] 4.5 实现版本记录选项卡
+  - [x] 4.5 实现版本记录选项卡
     - 创建 VersionsTab 组件
     - 显示版本列表（按时间倒序）
     - 版本标题格式：YYYY-MM-DD HH:mm:ss · 保存/优化
@@ -116,57 +116,57 @@
     - 限制最多 10 个版本
     - _Requirements: 6.3, 6.4, 6.5, 6.6, 6.7, 6.8_
 
-- [ ] 5. 实现账户页面（Requirement 7 & 8 & 9）
-  - [ ] 5.1 创建 AccountPage 组件
+- [x] 5. 实现账户页面（Requirement 7 & 8 & 9）
+  - [x] 5.1 创建 AccountPage 组件
     - 实现页面基础布局
     - _Requirements: 7.5_
   
-  - [ ] 5.2 实现用户信息展示
+  - [x] 5.2 实现用户信息展示
     - 显示用户头像
     - 显示邮箱
     - 显示账户类型（Free/Pro）
     - _Requirements: 7.5_
   
-  - [ ] 5.3 实现配额信息展示
+  - [x] 5.3 实现配额信息展示
     - 显示已用/总计配额
     - 显示下次重置时间（UTC）
     - _Requirements: 8.7_
   
-  - [ ] 5.4 实现订阅信息展示
+  - [x] 5.4 实现订阅信息展示
     - 显示订阅状态
     - 显示下次扣费日期
     - 实现升级到 Pro 按钮
     - 实现取消订阅按钮
     - _Requirements: 9.6_
 
-- [ ] 6. 前端状态管理与本地存储
-  - [ ] 6.1 配置 Zustand 状态管理
+- [x] 6. 前端状态管理与本地存储
+  - [x] 6.1 配置 Zustand 状态管理
     - 创建 auth store（用户信息、登录状态）
     - 创建 workspace store（输入、输出、版本列表）
     - 创建 quota store（配额信息）
     - _Requirements: 2.3, 6.1, 8.1_
   
-  - [ ] 6.2 实现本地存储
+  - [x] 6.2 实现本地存储
     - 实现草稿自动保存到 localStorage
     - 实现版本列表本地缓存
     - 实现模型选择持久化
     - _Requirements: 6.1, 2.3_
 
-- [ ] 7. 前端错误处理与 UI 优化（Requirement 10）
-  - [ ] 7.1 实现错误处理
+- [x] 7. 前端错误处理与 UI 优化（Requirement 10）
+  - [x] 7.1 实现错误处理
     - 创建全局错误边界组件
     - 实现 Toast 通知组件
     - 实现输入验证错误显示
     - 实现文件上传错误显示
     - _Requirements: 10.1, 10.2, 10.3, 10.4, 10.5_
   
-  - [ ] 7.2 优化响应式设计
+  - [x] 7.2 优化响应式设计
     - 测试桌面端布局
     - 测试移动端布局
     - 优化断点切换
     - _Requirements: 1.1, 1.2, 1.7_
   
-  - [ ] 7.3 优化页面性能
+  - [x] 7.3 优化页面性能
     - 实现代码分割（Next.js dynamic import）
     - 优化图片加载（Next.js Image）
     - 实现骨架屏加载状态
@@ -174,14 +174,14 @@
     - 确保交互响应 < 100ms
     - _Requirements: 1.3, 1.4_
   
-  - [ ] 7.4 优化 UI 细节
+  - [x] 7.4 优化 UI 细节
     - 实现进度条动画
     - 实现按钮加载状态
     - 实现 Toast 通知动画
     - 实现灰字提示样式
     - _Requirements: 5.2, 5.8, 5.10_
 
-- [ ] 8. Checkpoint - 前端功能验证
+- [x] 8. Checkpoint - 前端功能验证
   - 测试所有前端组件和用户流程
   - 验证响应式布局
   - 验证本地存储功能
@@ -202,28 +202,28 @@
     - 测试迁移和回滚
     - _Requirements: 11.5_
 
+- [x] 10. 后端核心服务实现
 - [ ] 10. 后端核心服务实现
-- [ ] 10. 后端核心服务实现
-  - [ ] 10.1 实现 LLMService
+  - [x] 10.1 实现 LLMService
     - 封装 DeepSeek API 调用
     - 实现 analyze_intent 方法（框架匹配）
     - 实现 generate_prompt 方法（提示词生成）
     - 添加错误处理和重试逻辑
     - _Requirements: 2.8, 3.2, 5.1_
   
-  - [ ] 10.2 实现 FrameworkMatcher Service
+  - [x] 10.2 实现 FrameworkMatcher Service
     - 加载 Frameworks_Summary.md 表格
     - 实现框架匹配逻辑（调用 LLMService）
     - 返回 1-3 个候选框架
     - _Requirements: 3.2, 3.3, 3.4, 3.5_
   
-  - [ ] 10.3 实现 QuotaManager Service
+  - [x] 10.3 实现 QuotaManager Service
     - 实现配额检查逻辑（Free: 5次/日，Pro: 100次/日）
     - 实现配额消耗逻辑
     - 实现每日配额重置（UTC 00:00）
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6_
   
-  - [ ] 10.4 实现 VersionManager Service
+  - [x] 10.4 实现 VersionManager Service
     - 实现版本保存逻辑（save/optimize 类型）
     - 实现版本列表获取（最近 10 个，按时间倒序）
     - 实现版本查询和回滚
@@ -277,8 +277,8 @@
     - POST /api/v1/payment/cancel（取消订阅）
     - _Requirements: 9.1, 9.2, 9.6_
 
-- [ ] 12. 前后端集成
-  - [ ] 12.1 配置 React Query
+- [-] 12. 前后端集成
+  - [x] 12.1 配置 React Query
     - 创建 API client（axios）
     - 实现框架匹配 query
     - 实现提示词生成 mutation
