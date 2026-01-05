@@ -5,6 +5,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 from pydantic import BaseModel
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +27,13 @@ class QuotaManager:
         self.quotas = {}
         self.FREE_QUOTA = 5
         self.PRO_QUOTA = 100
+        
+        # 检查是否为开发/测试环境
+        self.environment = os.getenv("ENVIRONMENT", "development").lower()
+        self.skip_quota_check = self.environment in ["development", "test", "testing"]
+        
+        if self.skip_quota_check:
+            logger.info(f"Quota check disabled for {self.environment} environment")
     
     def _get_utc_date(self) -> str:
         """获取当前 UTC 日期（YYYY-MM-DD 格式）"""
@@ -73,8 +81,13 @@ class QuotaManager:
             # 获取已使用配额
             used = self.quotas.get(quota_key, 0)
             
-            # 计算是否可以生成
-            can_generate = used < total
+            # 开发/测试环境跳过配额检查
+            if self.skip_quota_check:
+                can_generate = True
+                logger.debug(f"Quota check skipped for {self.environment} environment")
+            else:
+                # 计算是否可以生成
+                can_generate = used < total
             
             # 获取重置时间
             reset_time = self._get_next_reset_time()
@@ -87,7 +100,7 @@ class QuotaManager:
                 can_generate=can_generate
             )
             
-            logger.info(f"Checked quota for user {user_id}: {used}/{total}")
+            logger.info(f"Checked quota for user {user_id}: {used}/{total} (can_generate: {can_generate})")
             return status
             
         except Exception as e:
@@ -110,6 +123,11 @@ class QuotaManager:
             是否成功消耗（配额不足返回 False）
         """
         try:
+            # 开发/测试环境直接返回成功
+            if self.skip_quota_check:
+                logger.debug(f"Quota consumption skipped for {self.environment} environment")
+                return True
+            
             # 先检查配额
             status = await self.check_quota(user_id, account_type)
             
