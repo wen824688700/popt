@@ -16,6 +16,7 @@ export interface MatchFrameworksRequest {
   input: string;
   attachment?: string;
   user_type?: 'free' | 'pro';
+  model?: string;
 }
 
 export interface MatchFrameworksResponse {
@@ -35,6 +36,7 @@ export interface GeneratePromptRequest {
   attachment_content?: string;
   user_id?: string;
   account_type?: 'free' | 'pro';
+  model?: string;
 }
 
 export interface GeneratePromptResponse {

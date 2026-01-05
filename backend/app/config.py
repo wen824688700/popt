@@ -9,6 +9,10 @@ class Settings(BaseSettings):
     deepseek_api_key: str
     deepseek_base_url: str = "https://api.deepseek.com"
     
+    # Google Gemini API
+    gemini_api_key: str
+    gemini_base_url: str = "https://generativelanguage.googleapis.com"
+    
     # Supabase
     supabase_url: str
     supabase_key: str

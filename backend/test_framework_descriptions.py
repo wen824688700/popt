@@ -2,7 +2,7 @@
 测试框架描述加载功能
 """
 import asyncio
-from app.services.llm_service import LLMService
+from app.services.llm_service import DeepSeekService
 from app.services.framework_matcher import FrameworkMatcher
 from app.config import get_settings
 
@@ -13,7 +13,7 @@ async def test_framework_descriptions():
     
     # 初始化服务
     settings = get_settings()
-    llm_service = LLMService(
+    llm_service = DeepSeekService(
         api_key=settings.deepseek_api_key,
         base_url=settings.deepseek_base_url
     )

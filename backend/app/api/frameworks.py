@@ -5,35 +5,49 @@ from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional
 
-from app.services.llm_service import LLMService
+from app.services.base_llm import BaseLLMService
+from app.services.llm_factory import LLMFactory
 from app.services.framework_matcher import FrameworkMatcher, FrameworkCandidate
 from app.config import get_settings
 
 router = APIRouter(prefix="/api/v1/frameworks", tags=["frameworks"])
 
-# 全局服务实例
-llm_service = None
-framework_matcher = None
+# 全局服务实例缓存
+_llm_services = {}
+_framework_matchers = {}
 
 
-def get_llm_service() -> LLMService:
-    """获取 LLM 服务实例"""
-    global llm_service
-    if llm_service is None:
+def get_llm_service(model: str = "deepseek") -> BaseLLMService:
+    """
+    获取 LLM 服务实例
+    
+    Args:
+        model: 模型类型 ('deepseek' 或 'gemini')
+    
+    Returns:
+        BaseLLMService 实例
+    """
+    global _llm_services
+    if model not in _llm_services:
         settings = get_settings()
-        llm_service = LLMService(
-            api_key=settings.deepseek_api_key,
-            base_url=settings.deepseek_base_url
-        )
-    return llm_service
+        _llm_services[model] = LLMFactory.create_service(model, settings)
+    return _llm_services[model]
 
 
-def get_framework_matcher() -> FrameworkMatcher:
-    """获取框架匹配器实例"""
-    global framework_matcher
-    if framework_matcher is None:
-        framework_matcher = FrameworkMatcher(get_llm_service())
-    return framework_matcher
+def get_framework_matcher(model: str = "deepseek") -> FrameworkMatcher:
+    """
+    获取框架匹配器实例
+    
+    Args:
+        model: 模型类型 ('deepseek' 或 'gemini')
+    
+    Returns:
+        FrameworkMatcher 实例
+    """
+    global _framework_matchers
+    if model not in _framework_matchers:
+        _framework_matchers[model] = FrameworkMatcher(get_llm_service(model))
+    return _framework_matchers[model]
 
 
 class MatchRequest(BaseModel):
@@ -41,6 +55,7 @@ class MatchRequest(BaseModel):
     input: str = Field(..., min_length=10, description="用户输入（至少10个字符）")
     attachment: Optional[str] = Field(None, description="附件内容（base64编码）")
     user_type: str = Field("free", description="用户类型（free/pro）")
+    model: str = Field("deepseek", description="使用的模型（deepseek/gemini）")
 
 
 class MatchResponse(BaseModel):
@@ -49,10 +64,7 @@ class MatchResponse(BaseModel):
 
 
 @router.post("/match", response_model=MatchResponse)
-async def match_frameworks(
-    request: MatchRequest,
-    matcher: FrameworkMatcher = Depends(get_framework_matcher)
-):
+async def match_frameworks(request: MatchRequest):
     """
     匹配最合适的框架
     
@@ -65,6 +77,16 @@ async def match_frameworks(
                 status_code=400,
                 detail="输入至少需要 10 个字符"
             )
+        
+        # 验证模型类型
+        if request.model not in LLMFactory.get_supported_models():
+            raise HTTPException(
+                status_code=400,
+                detail=f"不支持的模型类型: {request.model}"
+            )
+        
+        # 获取对应模型的匹配器
+        matcher = get_framework_matcher(request.model)
         
         # 匹配框架
         candidates = await matcher.match_frameworks(

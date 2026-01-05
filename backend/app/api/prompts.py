@@ -8,7 +8,8 @@ import os
 import glob
 import logging
 
-from app.services.llm_service import LLMService
+from app.services.base_llm import BaseLLMService
+from app.services.llm_factory import LLMFactory
 from app.services.version_manager import VersionManager, VersionType
 from app.services.quota_manager import QuotaManager
 from app.api.frameworks import get_llm_service
@@ -96,6 +97,7 @@ class GenerateRequest(BaseModel):
     attachment_content: Optional[str] = Field(None, description="附件内容")
     user_id: str = Field("test_user", description="用户 ID")
     account_type: str = Field("free", description="账户类型（free/pro）")
+    model: str = Field("deepseek", description="使用的模型（deepseek/gemini）")
 
 
 class GenerateResponse(BaseModel):
@@ -106,10 +108,7 @@ class GenerateResponse(BaseModel):
 
 
 @router.post("/generate", response_model=GenerateResponse)
-async def generate_prompt(
-    request: GenerateRequest,
-    llm_service: LLMService = Depends(get_llm_service)
-):
+async def generate_prompt(request: GenerateRequest):
     """
     生成优化后的提示词
     
@@ -139,6 +138,16 @@ async def generate_prompt(
                     }
                 }
             )
+        
+        # 验证模型类型
+        if request.model not in LLMFactory.get_supported_models():
+            raise HTTPException(
+                status_code=400,
+                detail=f"不支持的模型类型: {request.model}"
+            )
+        
+        # 获取对应模型的 LLM 服务
+        llm_service = get_llm_service(request.model)
         
         # 加载框架文档
         framework_doc = _load_framework_doc(request.framework_id)

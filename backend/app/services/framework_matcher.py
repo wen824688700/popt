@@ -7,7 +7,7 @@ from typing import List
 from pydantic import BaseModel
 import logging
 
-from .llm_service import LLMService
+from .base_llm import BaseLLMService
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class UserType:
 class FrameworkMatcher:
     """根据用户输入匹配最合适的 Prompt 框架"""
     
-    def __init__(self, llm_service: LLMService):
+    def __init__(self, llm_service: BaseLLMService):
         self.llm_service = llm_service
         self.frameworks_summary = self._load_frameworks_summary()
         self.frameworks_descriptions = self._load_frameworks_descriptions()

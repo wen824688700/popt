@@ -5,23 +5,20 @@ import { useRouter } from 'next/navigation';
 import ClarificationModal, { Framework, ClarificationAnswers } from '@/components/ClarificationModal';
 import Toast from '@/components/Toast';
 import LoadingSkeleton from '@/components/LoadingSkeleton';
+import ModelSelector from '@/components/ModelSelector';
 import { validateInputLength, validateFileType, validateFileSize, formatFileSize } from '@/lib/utils';
 import { useLocalStorage } from '@/lib/hooks/useLocalStorage';
+import { useModelStore } from '@/lib/stores/modelStore';
 import { apiClient } from '@/lib/api/client';
-
-const AVAILABLE_MODELS = [
-  { id: 'deepseek', name: 'DeepSeek', description: '高性能 AI 模型' }
-];
 
 export default function InputPage() {
   const router = useRouter();
   const [input, setInput] = useState('');
-  const [selectedModel, setSelectedModel] = useLocalStorage('selectedModel', 'deepseek');
+  const { selectedModel, setSelectedModel } = useModelStore();
   const [attachment, setAttachment] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [isClient, setIsClient] = useState(false);
-  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
@@ -88,6 +85,7 @@ export default function InputPage() {
       const response = await apiClient.matchFrameworks({
         input,
         user_type: 'free',
+        model: selectedModel,
       });
 
       if (response.frameworks && response.frameworks.length > 0) {
@@ -137,6 +135,7 @@ export default function InputPage() {
         },
         user_id: 'test_user',
         account_type: 'free',
+        model: selectedModel,
       });
       
       setIsModalOpen(false);
@@ -257,7 +256,7 @@ export default function InputPage() {
           </div>
 
           {/* 输入框容器 */}
-          <div className="bg-white rounded-3xl shadow-2xl shadow-purple-200/50 border border-gray-200/50 overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-2xl shadow-purple-200/50 border border-gray-200/50">
             {/* 附件显示区域 */}
             {attachment && (
               <div className="px-6 pt-4 pb-2 border-b border-gray-100">
@@ -294,8 +293,8 @@ export default function InputPage() {
             </div>
 
             {/* 底部工具栏 */}
-            <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="px-6 py-3 bg-gray-50/50 border-t border-gray-100 flex items-center justify-between relative overflow-visible">
+              <div className="flex items-center gap-3 relative">
                 {/* 附件按钮 */}
                 <input
                   ref={fileInputRef}
@@ -315,39 +314,11 @@ export default function InputPage() {
                 </button>
 
                 {/* 模型选择器 */}
-                <div className="relative">
-                  <button
-                    onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-all"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <span>{AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name}</span>
-                    <svg className={`w-4 h-4 transition-transform ${isModelDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {isModelDropdownOpen && (
-                    <div className="absolute bottom-full left-0 mb-2 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden min-w-[200px]">
-                      {AVAILABLE_MODELS.map((model) => (
-                        <button
-                          key={model.id}
-                          onClick={() => {
-                            setSelectedModel(model.id);
-                            setIsModelDropdownOpen(false);
-                          }}
-                          className={`w-full px-4 py-3 text-left hover:bg-purple-50 transition-colors ${
-                            selectedModel === model.id ? 'bg-purple-50 border-l-4 border-purple-600' : ''
-                          }`}
-                        >
-                          <div className="font-medium text-gray-900">{model.name}</div>
-                          <div className="text-xs text-gray-500">{model.description}</div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="w-48">
+                  <ModelSelector
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                  />
                 </div>
 
                 {/* 字符计数 */}

@@ -1,25 +1,24 @@
 """
-LLM Service for interacting with DeepSeek API
+Google Gemini API 服务
 """
 import httpx
 from typing import List, Dict, Optional
-import json
 import logging
 from .base_llm import BaseLLMService
 
 logger = logging.getLogger(__name__)
 
 
-class DeepSeekService(BaseLLMService):
-    """Service for interacting with DeepSeek LLM API"""
+class GeminiService(BaseLLMService):
+    """Google Gemini API 服务"""
     
-    def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com"):
+    def __init__(self, api_key: str, base_url: str = "https://generativelanguage.googleapis.com"):
         self.api_key = api_key
         self.base_url = base_url
+        self.model = "gemini-3-pro-preview"  # 使用 Gemini 3 Pro Preview 模型
         self.client = httpx.AsyncClient(
             timeout=60.0,
             headers={
-                "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
             }
         )
@@ -51,37 +50,45 @@ class DeepSeekService(BaseLLMService):
 请仅返回 1-3 个最合适的框架 ID（用逗号分隔），不要包含其他内容。
 例如：RACEF,Chain-of-Thought"""
 
+            # Gemini API 请求格式
+            url = f"{self.base_url}/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+            
             response = await self.client.post(
-                f"{self.base_url}/v1/chat/completions",
+                url,
                 json={
-                    "model": "deepseek-chat",
-                    "messages": [
-                        {"role": "system", "content": "你是一个 Prompt 工程专家，擅长分析用户需求并推荐合适的框架。"},
-                        {"role": "user", "content": prompt}
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 100
+                    "contents": [{
+                        "parts": [{
+                            "text": prompt
+                        }]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.3,
+                        "maxOutputTokens": 100,
+                    }
                 }
             )
             
             response.raise_for_status()
             result = response.json()
             
-            # 解析返回的框架 ID
-            content = result["choices"][0]["message"]["content"].strip()
+            # 解析 Gemini 响应格式
+            content = result["candidates"][0]["content"]["parts"][0]["text"].strip()
             framework_ids = [fid.strip() for fid in content.split(",")]
             
             # 确保返回 1-3 个框架
             framework_ids = framework_ids[:3]
             
-            logger.info(f"Analyzed intent for input: {user_input[:50]}... -> {framework_ids}")
+            logger.info(f"Gemini analyzed intent for input: {user_input[:50]}... -> {framework_ids}")
             return framework_ids
             
         except httpx.HTTPError as e:
-            logger.error(f"HTTP error during intent analysis: {e}")
-            raise Exception(f"LLM API 调用失败: {str(e)}")
+            logger.error(f"Gemini HTTP error during intent analysis: {e}")
+            # 如果是网络问题，提供更友好的错误信息
+            if "ConnectError" in str(type(e)) or "TimeoutException" in str(type(e)):
+                raise Exception("无法连接到 Gemini API，可能需要配置代理或检查网络连接")
+            raise Exception(f"Gemini API 调用失败: {str(e)}")
         except Exception as e:
-            logger.error(f"Error during intent analysis: {e}")
+            logger.error(f"Gemini error during intent analysis: {e}")
             raise Exception(f"意图分析失败: {str(e)}")
     
     async def generate_prompt(
@@ -105,7 +112,7 @@ class DeepSeekService(BaseLLMService):
         """
         try:
             # 构建系统提示
-            system_prompt = f"""你是一个专业的 Prompt 工程师。请根据以下框架文档和用户提供的信息，生成一个优化后的提示词。
+            system_instruction = f"""你是一个专业的 Prompt 工程师。请根据以下框架文档和用户提供的信息，生成一个优化后的提示词。
 
 框架文档：
 {framework_doc}
@@ -140,32 +147,45 @@ class DeepSeekService(BaseLLMService):
 
             user_prompt += "\n\n请基于上述框架文档和用户信息，生成一个完整的、优化后的提示词（使用 Markdown 格式）："
 
+            # Gemini API 请求格式（带系统指令）
+            url = f"{self.base_url}/v1beta/models/{self.model}:generateContent?key={self.api_key}"
+            
             response = await self.client.post(
-                f"{self.base_url}/v1/chat/completions",
+                url,
                 json={
-                    "model": "deepseek-chat",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 3000
+                    "system_instruction": {
+                        "parts": [{
+                            "text": system_instruction
+                        }]
+                    },
+                    "contents": [{
+                        "parts": [{
+                            "text": user_prompt
+                        }]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 3000,
+                    }
                 }
             )
             
             response.raise_for_status()
             result = response.json()
             
-            generated_prompt = result["choices"][0]["message"]["content"].strip()
+            # 解析 Gemini 响应格式
+            generated_prompt = result["candidates"][0]["content"]["parts"][0]["text"].strip()
             
-            logger.info(f"Generated prompt for input: {user_input[:50]}...")
+            logger.info(f"Gemini generated prompt for input: {user_input[:50]}...")
             return generated_prompt
             
         except httpx.HTTPError as e:
-            logger.error(f"HTTP error during prompt generation: {e}")
-            raise Exception(f"LLM API 调用失败: {str(e)}")
+            logger.error(f"Gemini HTTP error during prompt generation: {e}")
+            if "ConnectError" in str(type(e)) or "TimeoutException" in str(type(e)):
+                raise Exception("无法连接到 Gemini API，可能需要配置代理或检查网络连接")
+            raise Exception(f"Gemini API 调用失败: {str(e)}")
         except Exception as e:
-            logger.error(f"Error during prompt generation: {e}")
+            logger.error(f"Gemini error during prompt generation: {e}")
             raise Exception(f"提示词生成失败: {str(e)}")
     
     async def close(self):
