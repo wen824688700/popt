@@ -3,16 +3,20 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import EditorPanel from '@/components/EditorPanel';
-import OutputTabs from '@/components/OutputTabs';
 import MarkdownTab from '@/components/MarkdownTab';
-import VersionsTab from '@/components/VersionsTab';
+import VersionHistory from '@/components/VersionHistory';
+import VersionComparison from '@/components/VersionComparison';
 
 interface Version {
   id: string;
   content: string;
   type: 'save' | 'optimize';
   createdAt: string;
+  description?: string;
+  versionNumber: string; // 版本号，如 "1.0", "1.1", "2.0"
 }
+
+type ViewMode = 'editor' | 'comparison';
 
 export default function WorkspacePage() {
   const router = useRouter();
@@ -20,6 +24,25 @@ export default function WorkspacePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [versions, setVersions] = useState<Version[]>([]);
   const [editorContent, setEditorContent] = useState('');
+  const [selectedVersionIds, setSelectedVersionIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<ViewMode>('editor');
+  const [currentVersionId, setCurrentVersionId] = useState<string | undefined>();
+
+  // 计算下一个版本号
+  const getNextVersionNumber = (type: 'save' | 'optimize'): string => {
+    if (versions.length === 0) return '1.0';
+    
+    const latestVersion = versions[0]; // 最新版本
+    const [major, minor] = latestVersion.versionNumber.split('.').map(Number);
+    
+    if (type === 'optimize') {
+      // 优化生成：小版本号递增 (1.0 -> 1.1 -> 1.2)
+      return `${major}.${minor + 1}`;
+    } else {
+      // 手动保存：大版本号递增 (1.x -> 2.0, 2.x -> 3.0)
+      return `${major + 1}.0`;
+    }
+  };
 
   // 从 localStorage 加载初始数据
   useEffect(() => {
@@ -28,7 +51,17 @@ export default function WorkspacePage() {
     
     if (savedPrompt) {
       setOutputContent(savedPrompt);
-      // 清除 localStorage 中的数据，避免刷新时重复加载
+      // 创建初始版本
+      const initialVersion: Version = {
+        id: Date.now().toString(),
+        content: savedPrompt,
+        type: 'optimize',
+        createdAt: new Date().toISOString(),
+        description: '初始生成版本',
+        versionNumber: '1.0',
+      };
+      setVersions([initialVersion]);
+      setCurrentVersionId(initialVersion.id);
       localStorage.removeItem('currentPrompt');
     }
     
@@ -41,13 +74,11 @@ export default function WorkspacePage() {
   const handleRegenerate = async (content: string) => {
     setIsLoading(true);
     try {
-      // 从 localStorage 获取之前保存的框架和追问答案
       const savedFramework = localStorage.getItem('selectedFramework');
       const savedAnswers = localStorage.getItem('clarificationAnswers');
       
       if (!savedFramework || !savedAnswers) {
         console.error('Missing framework or clarification answers');
-        // TODO: 使用 Toast 组件替代 alert
         alert('缺少必要的信息，请返回首页重新开始');
         setIsLoading(false);
         return;
@@ -55,11 +86,8 @@ export default function WorkspacePage() {
 
       const framework = JSON.parse(savedFramework);
       const answers = JSON.parse(savedAnswers);
-
-      // 使用环境变量获取 API URL
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-      // 调用后端 API 重新生成
       const response = await fetch(`${apiUrl}/api/v1/prompts/generate`, {
         method: 'POST',
         headers: {
@@ -85,15 +113,17 @@ export default function WorkspacePage() {
       
       // 自动保存为新版本
       const newVersion: Version = {
-        id: data.version_id,
+        id: data.version_id || Date.now().toString(),
         content: newContent,
         type: 'optimize',
         createdAt: new Date().toISOString(),
+        description: '重新优化生成',
+        versionNumber: getNextVersionNumber('optimize'),
       };
       setVersions(prev => [newVersion, ...prev]);
+      setCurrentVersionId(newVersion.id);
     } catch (error) {
       console.error('Failed to regenerate:', error);
-      // TODO: 使用 Toast 组件替代 alert
       alert(`重新生成失败: ${error instanceof Error ? error.message : '未知错误'}`);
     } finally {
       setIsLoading(false);
@@ -102,6 +132,7 @@ export default function WorkspacePage() {
 
   const handleModify = (content: string) => {
     setEditorContent(content);
+    setViewMode('editor');
   };
 
   const handleSave = (content: string) => {
@@ -110,48 +141,95 @@ export default function WorkspacePage() {
       content,
       type: 'save',
       createdAt: new Date().toISOString(),
+      description: '手动保存',
+      versionNumber: getNextVersionNumber('save'),
     };
     setVersions(prev => [newVersion, ...prev]);
+    setCurrentVersionId(newVersion.id);
   };
 
-  const handleViewVersion = (version: Version) => {
-    setOutputContent(version.content);
+  const handleSelectVersion = (versionId: string) => {
+    if (selectedVersionIds.includes(versionId)) {
+      // 取消选择
+      const newSelected = selectedVersionIds.filter(id => id !== versionId);
+      setSelectedVersionIds(newSelected);
+      if (newSelected.length < 2) {
+        setViewMode('editor');
+      }
+    } else {
+      // 选择版本
+      if (selectedVersionIds.length < 2) {
+        const newSelected = [...selectedVersionIds, versionId];
+        setSelectedVersionIds(newSelected);
+        
+        // 如果选择了两个版本，切换到对比模式
+        if (newSelected.length === 2) {
+          setViewMode('comparison');
+        } else {
+          // 单个版本，显示在编辑器
+          const version = versions.find(v => v.id === versionId);
+          if (version) {
+            setOutputContent(version.content);
+            setCurrentVersionId(version.id);
+            setViewMode('editor');
+          }
+        }
+      } else {
+        // 已经选择了两个，替换第二个
+        const newSelected = [selectedVersionIds[0], versionId];
+        setSelectedVersionIds(newSelected);
+        setViewMode('comparison');
+      }
+    }
   };
 
-  const handleRollback = (version: Version) => {
+  const handleRestoreVersion = (version: Version) => {
     setOutputContent(version.content);
     setEditorContent(version.content);
+    setCurrentVersionId(version.id);
+    setSelectedVersionIds([]);
+    setViewMode('editor');
   };
 
-  const tabs = [
-    {
-      id: 'markdown',
-      label: 'Markdown 原文',
-      content: (
-        <MarkdownTab
-          content={outputContent}
-          onModify={handleModify}
-          onSave={handleSave}
-        />
-      ),
-    },
-    {
-      id: 'versions',
-      label: '版本记录',
-      content: (
-        <VersionsTab
-          versions={versions}
-          onViewVersion={handleViewVersion}
-          onRollback={handleRollback}
-        />
-      ),
-    },
-  ];
+  const handleUpdateVersionNumber = (versionId: string, newVersionNumber: string) => {
+    setVersions(prev => prev.map(v => 
+      v.id === versionId ? { ...v, versionNumber: newVersionNumber } : v
+    ));
+  };
+
+  const handleMerge = (versionId: string) => {
+    const version = versions.find(v => v.id === versionId);
+    if (version) {
+      setOutputContent(version.content);
+      setCurrentVersionId(version.id);
+      setSelectedVersionIds([]);
+      setViewMode('editor');
+    }
+  };
+
+  const handleRevert = (versionId: string) => {
+    const version = versions.find(v => v.id === versionId);
+    if (version) {
+      setOutputContent(version.content);
+      setEditorContent(version.content);
+      setCurrentVersionId(version.id);
+      setSelectedVersionIds([]);
+      setViewMode('editor');
+    }
+  };
+
+  // 获取对比的两个版本
+  const comparisonVersions = selectedVersionIds.length === 2
+    ? {
+        old: versions.find(v => v.id === selectedVersionIds[0]),
+        new: versions.find(v => v.id === selectedVersionIds[1]),
+      }
+    : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-purple-50/30 to-cyan-50/30">
+    <div className="min-h-screen bg-[#1a2332]">
       {/* 顶部导航 */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200/50 sticky top-0 z-50">
+      <nav className="bg-[#242d3d] border-b border-[#3d4a5c] sticky top-0 z-50">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             {/* 左侧 Logo */}
@@ -161,7 +239,7 @@ export default function WorkspacePage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
               </div>
-              <span className="text-xl font-bold text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>
+              <span className="text-xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
                 Prompt Optimizer
               </span>
             </div>
@@ -170,7 +248,7 @@ export default function WorkspacePage() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push('/')}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -188,10 +266,22 @@ export default function WorkspacePage() {
         </div>
       </nav>
 
-      {/* Desktop: 5:5 split layout, Mobile: stacked layout */}
-      <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)] gap-4 p-4">
-        {/* Left Editor Panel - 50% on desktop */}
-        <div className="w-full lg:w-1/2 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden">
+      {/* 主内容区 - 三栏布局 */}
+      <div className="flex h-[calc(100vh-73px)]">
+        {/* 左侧：版本历史 */}
+        <div className="w-64 border-r border-[#3d4a5c] bg-[#1a2332]">
+          <VersionHistory
+            versions={versions}
+            currentVersionId={currentVersionId}
+            selectedVersionIds={selectedVersionIds}
+            onSelectVersion={handleSelectVersion}
+            onRestoreVersion={handleRestoreVersion}
+            onUpdateVersionNumber={handleUpdateVersionNumber}
+          />
+        </div>
+
+        {/* 中间：编辑器 */}
+        <div className="flex-1 border-r border-[#3d4a5c]">
           <EditorPanel
             initialContent={editorContent}
             onRegenerate={handleRegenerate}
@@ -199,9 +289,22 @@ export default function WorkspacePage() {
           />
         </div>
 
-        {/* Right Output Panel - 50% on desktop */}
-        <div className="w-full lg:w-1/2 rounded-2xl border border-gray-100 bg-white shadow-lg overflow-hidden">
-          <OutputTabs tabs={tabs} defaultTab="markdown" />
+        {/* 右侧：输出区或对比区 */}
+        <div className="flex-1">
+          {viewMode === 'comparison' && comparisonVersions?.old && comparisonVersions?.new ? (
+            <VersionComparison
+              oldVersion={comparisonVersions.old}
+              newVersion={comparisonVersions.new}
+              onMerge={handleMerge}
+              onRevert={handleRevert}
+            />
+          ) : (
+            <MarkdownTab
+              content={outputContent}
+              onModify={handleModify}
+              onSave={handleSave}
+            />
+          )}
         </div>
       </div>
     </div>

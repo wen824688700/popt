@@ -1,5 +1,7 @@
 'use client';
 
+import FeatureShowcase from './FeatureShowcase';
+
 export default function FeaturesSection() {
   const comparisonItems = [
     { traditional: '不知道怎么写', optimized: 'AI 智能匹配框架' },
@@ -91,6 +93,9 @@ export default function FeaturesSection() {
             </div>
           ))}
         </div>
+
+        {/* 功能场景展示 */}
+        <FeatureShowcase />
       </div>
     </section>
   );

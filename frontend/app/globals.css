@@ -4,6 +4,16 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 深色背景主题 */
+:root {
+  --bg-primary: #1a2332;
+  --bg-secondary: #242d3d;
+  --bg-tertiary: #2d3748;
+  --border-color: #3d4a5c;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 255, 255, 255;

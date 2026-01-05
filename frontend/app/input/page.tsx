@@ -190,7 +190,7 @@ export default function InputPage() {
   }
 
   return (
-    <main className="min-h-screen relative overflow-hidden">
+    <main className="min-h-screen relative overflow-hidden bg-[#1a2332]">
       {/* Toast */}
       {toast && (
         <Toast
@@ -211,14 +211,8 @@ export default function InputPage() {
         onCancel={handleModalCancel}
       />
 
-      {/* 背景 */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-purple-50 to-cyan-50">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-purple-200/30 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-200/30 rounded-full blur-3xl"></div>
-      </div>
-
       {/* 顶部导航 */}
-      <nav className="relative z-10 px-6 py-6">
+      <nav className="relative z-10 px-6 py-6 bg-[#242d3d] border-b border-[#3d4a5c]">
         <div className="flex items-center justify-between">
           {/* 左侧 Logo */}
           <div className="flex items-center gap-3">
@@ -227,7 +221,7 @@ export default function InputPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-            <span className="text-xl font-bold text-gray-900" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            <span className="text-xl font-bold text-white" style={{ fontFamily: 'Outfit, sans-serif' }}>
               Prompt Optimizer
             </span>
           </div>
@@ -236,7 +230,7 @@ export default function InputPage() {
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/')}
-              className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 text-gray-300 hover:text-white transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -258,30 +252,30 @@ export default function InputPage() {
         <div className="w-full max-w-3xl px-4">
           {/* 标题 */}
           <div className="text-center mb-8">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-3" style={{ fontFamily: 'Outfit, sans-serif' }}>
               输入一句话需求
             </h2>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-gray-400">
               简单、自然地描述你想要的 Prompt
             </p>
           </div>
 
-          {/* 输入框容器 - 优化圆角和阴影 */}
-          <div className="bg-white rounded-2xl shadow-xl shadow-purple-100/50 border border-gray-100/50 overflow-visible">
+          {/* 输入框容器 - 深色主题 */}
+          <div className="bg-[#242d3d] rounded-2xl shadow-xl border border-[#3d4a5c] overflow-visible">
             {/* 附件显示区域 */}
             {attachment && (
-              <div className="px-6 pt-4 pb-2 border-b border-gray-50">
-                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-50 to-cyan-50 rounded-xl border border-purple-100/50">
-                  <svg className="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="px-6 pt-4 pb-2 border-b border-[#3d4a5c]">
+                <div className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#1a2332] rounded-xl border border-[#3d4a5c]">
+                  <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
                   </svg>
-                  <span className="text-sm font-medium text-gray-700">{attachment.name}</span>
+                  <span className="text-sm font-medium text-gray-300">{attachment.name}</span>
                   <span className="text-xs text-gray-500">({formatFileSize(attachment.size)})</span>
                   <button
                     onClick={handleRemoveFile}
-                    className="ml-1 p-1 hover:bg-red-50 rounded-lg transition-colors"
+                    className="ml-1 p-1 hover:bg-red-500/20 rounded-lg transition-colors"
                   >
-                    <svg className="w-3 h-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-3 h-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
@@ -298,13 +292,13 @@ export default function InputPage() {
                 onKeyDown={handleKeyDown}
                 placeholder="例如：帮我写一个关于产品营销的提示词..."
                 rows={1}
-                className="w-full px-6 py-5 text-gray-900 placeholder-gray-400 resize-none focus:outline-none text-base"
+                className="w-full px-6 py-5 text-gray-200 placeholder-gray-500 resize-none focus:outline-none text-base bg-transparent"
                 style={{ minHeight: '60px', maxHeight: '300px' }}
               />
             </div>
 
-            {/* 底部工具栏 - 优化圆角 */}
-            <div className="px-6 py-3 bg-gradient-to-r from-gray-50/50 to-purple-50/30 border-t border-gray-50 flex items-center justify-between">
+            {/* 底部工具栏 - 深色主题 */}
+            <div className="px-6 py-3 bg-[#1a2332] border-t border-[#3d4a5c] flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {/* 附件按钮 */}
                 <input
@@ -316,7 +310,7 @@ export default function InputPage() {
                 />
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  className="p-2.5 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded-xl transition-all"
+                  className="p-2.5 text-gray-400 hover:text-purple-400 hover:bg-[#242d3d] rounded-xl transition-all"
                   title="上传附件"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -333,7 +327,7 @@ export default function InputPage() {
                 </div>
 
                 {/* 字符计数 */}
-                <span className={`text-xs font-medium ${charCount < 10 ? 'text-gray-400' : 'text-purple-600'}`}>
+                <span className={`text-xs font-medium ${charCount < 10 ? 'text-gray-500' : 'text-purple-400'}`}>
                   {charCount} / 最少 10
                 </span>
               </div>
@@ -360,9 +354,9 @@ export default function InputPage() {
 
           {/* 提示信息 */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-gray-500">
-              按 <kbd className="px-2 py-1 bg-white rounded border border-gray-300 text-xs">Enter</kbd> 发送，
-              <kbd className="px-2 py-1 bg-white rounded border border-gray-300 text-xs">Shift + Enter</kbd> 换行
+            <p className="text-sm text-gray-400">
+              按 <kbd className="px-2 py-1 bg-[#242d3d] rounded border border-[#3d4a5c] text-xs text-gray-300">Enter</kbd> 发送，
+              <kbd className="px-2 py-1 bg-[#242d3d] rounded border border-[#3d4a5c] text-xs text-gray-300">Shift + Enter</kbd> 换行
             </p>
           </div>
         </div>

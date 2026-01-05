@@ -26,7 +26,7 @@ export default function EditorPanel({
         }));
         setLastSaved(new Date());
       }
-    }, 1000); // Save after 1 second of inactivity
+    }, 1000);
 
     return () => clearTimeout(saveTimer);
   }, [content]);
@@ -46,7 +46,7 @@ export default function EditorPanel({
     }
   }, [initialContent]);
 
-  // Update content when initialContent changes (e.g., from "Modify" button)
+  // Update content when initialContent changes
   useEffect(() => {
     if (initialContent) {
       setContent(initialContent);
@@ -60,34 +60,47 @@ export default function EditorPanel({
   };
 
   return (
-    <div className="h-full flex flex-col bg-white">
-      {/* Header - 优化样式 */}
-      <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gradient-to-r from-white to-purple-50/20">
-        <h2 className="text-lg font-semibold text-gray-900">编辑区</h2>
+    <div className="h-full flex flex-col bg-[#1a2332]">
+      {/* Header */}
+      <div className="px-6 py-4 border-b border-[#3d4a5c] flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-white">编辑区域</h2>
         {lastSaved && (
-          <span className="text-xs text-gray-500 bg-gray-50 px-3 py-1.5 rounded-full">
-            已保存 {lastSaved.toLocaleTimeString()}
+          <span className="text-xs text-gray-400 bg-[#242d3d] px-3 py-1.5 rounded-full border border-[#3d4a5c]">
+            已保存 {lastSaved.toLocaleTimeString('zh-CN')}
           </span>
         )}
       </div>
 
-      {/* Editor - 优化边框和圆角 */}
+      {/* Editor - 深色主题样式 */}
       <div className="flex-1 p-6">
-        <textarea
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          className="w-full h-full resize-none border border-gray-200 rounded-xl p-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent font-mono text-sm bg-gray-50/30 transition-all"
-          placeholder="在此编辑您的需求，或在末尾追加修改要求..."
-          disabled={isLoading}
-        />
+        <div className="h-full bg-[#242d3d] rounded-lg border border-[#3d4a5c] overflow-hidden">
+          {/* 模拟终端头部 */}
+          <div className="px-4 py-3 bg-[#1a2332] border-b border-[#3d4a5c] flex items-center gap-2">
+            <div className="flex gap-1.5">
+              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+              <div className="w-3 h-3 rounded-full bg-green-500"></div>
+            </div>
+            <span className="text-xs text-gray-400 ml-2">编辑器</span>
+          </div>
+          
+          {/* 文本区域 */}
+          <textarea
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            className="w-full h-[calc(100%-48px)] resize-none p-4 bg-transparent text-gray-200 font-mono text-sm focus:outline-none placeholder-gray-600"
+            placeholder="在此编辑您的需求，或在末尾追加修改要求..."
+            disabled={isLoading}
+          />
+        </div>
       </div>
 
-      {/* Footer - 优化按钮样式 */}
-      <div className="px-6 py-4 border-t border-gray-100 bg-gradient-to-r from-white to-purple-50/20">
+      {/* Footer */}
+      <div className="px-6 py-4 border-t border-[#3d4a5c]">
         <button
           onClick={handleRegenerate}
           disabled={isLoading || !content.trim()}
-          className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 text-white py-3 px-4 rounded-xl hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium hover:scale-[1.02] active:scale-[0.98]"
+          className="w-full bg-gradient-to-r from-purple-600 to-cyan-600 text-white py-3 px-4 rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center font-medium hover:scale-[1.02] active:scale-[0.98]"
         >
           {isLoading ? (
             <>
