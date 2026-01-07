@@ -21,6 +21,7 @@ frontend/.next/
 frontend/out/
 frontend/build/
 frontend/dist/
+*.tsbuildinfo
 
 # Python
 backend/*.egg-info/

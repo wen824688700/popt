@@ -30,11 +30,15 @@ class LLMFactory:
         model = model.lower()
         
         if model == 'deepseek':
+            if not settings.deepseek_api_key:
+                raise ValueError("Missing DEEPSEEK_API_KEY (deepseek_api_key) in environment")
             return DeepSeekService(
                 api_key=settings.deepseek_api_key,
                 base_url=settings.deepseek_base_url
             )
         elif model == 'gemini':
+            if not settings.gemini_api_key:
+                raise ValueError("Missing GEMINI_API_KEY (gemini_api_key) in environment")
             return GeminiService(
                 api_key=settings.gemini_api_key,
                 base_url=settings.gemini_base_url

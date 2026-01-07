@@ -6,6 +6,7 @@ import EditorPanel from '@/components/EditorPanel';
 import MarkdownTab from '@/components/MarkdownTab';
 import VersionHistory from '@/components/VersionHistory';
 import VersionComparison from '@/components/VersionComparison';
+import { apiClient } from '@/lib/api/client';
 
 interface Version {
   id: string;
@@ -86,28 +87,15 @@ export default function WorkspacePage() {
 
       const framework = JSON.parse(savedFramework);
       const answers = JSON.parse(savedAnswers);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000';
 
-      const response = await fetch(`${apiUrl}/api/v1/prompts/generate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          input: content,
-          framework_id: framework.id,
-          clarification_answers: answers,
-          user_id: 'test_user',
-          account_type: 'free',
-        }),
+      const data = await apiClient.generatePrompt({
+        input: content,
+        framework_id: framework.id,
+        clarification_answers: answers,
+        user_id: 'test_user',
+        account_type: 'free',
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.detail || '生成失败');
-      }
-
-      const data = await response.json();
       const newContent = data.output;
       setOutputContent(newContent);
       

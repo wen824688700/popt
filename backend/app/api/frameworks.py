@@ -30,7 +30,10 @@ def get_llm_service(model: str = "deepseek") -> BaseLLMService:
     global _llm_services
     if model not in _llm_services:
         settings = get_settings()
-        _llm_services[model] = LLMFactory.create_service(model, settings)
+        try:
+            _llm_services[model] = LLMFactory.create_service(model, settings)
+        except ValueError as e:
+            raise HTTPException(status_code=500, detail=f"Server misconfiguration: {str(e)}") from e
     return _llm_services[model]
 
 
