@@ -17,8 +17,21 @@ interface FrameworkCandidate {
 // 加载框架摘要
 function loadFrameworksSummary(): string {
   try {
-    const summaryPath = path.join(process.cwd(), '..', 'skills-main', 'skills', 'prompt-optimizer', 'references', 'Frameworks_Summary.md');
-    return fs.readFileSync(summaryPath, 'utf-8');
+    // 优先从 frontend/skills-main 读取（Vercel 部署）
+    const deployPath = path.join(process.cwd(), 'skills-main', 'skills', 'prompt-optimizer', 'references', 'Frameworks_Summary.md');
+    
+    if (fs.existsSync(deployPath)) {
+      return fs.readFileSync(deployPath, 'utf-8');
+    }
+    
+    // 如果找不到，尝试从上一级目录读取（本地开发）
+    const localPath = path.join(process.cwd(), '..', 'skills-main', 'skills', 'prompt-optimizer', 'references', 'Frameworks_Summary.md');
+    if (fs.existsSync(localPath)) {
+      return fs.readFileSync(localPath, 'utf-8');
+    }
+    
+    console.warn('Frameworks_Summary.md not found, using fallback');
+    throw new Error('File not found');
   } catch (error) {
     console.error('Error loading frameworks summary:', error);
     // 返回简化版本
@@ -105,7 +118,19 @@ CRISPE Framework`;
 // 加载框架描述
 function loadFrameworkDescription(frameworkId: string): string {
   try {
-    const frameworksDir = path.join(process.cwd(), '..', 'skills-main', 'skills', 'prompt-optimizer', 'references', 'frameworks');
+    // 优先从 frontend/skills-main 读取（Vercel 部署）
+    let frameworksDir = path.join(process.cwd(), 'skills-main', 'skills', 'prompt-optimizer', 'references', 'frameworks');
+    
+    if (!fs.existsSync(frameworksDir)) {
+      // 尝试从上一级目录读取（本地开发）
+      frameworksDir = path.join(process.cwd(), '..', 'skills-main', 'skills', 'prompt-optimizer', 'references', 'frameworks');
+    }
+    
+    if (!fs.existsSync(frameworksDir)) {
+      console.warn('Frameworks directory not found');
+      return `适用于用户需求的 ${frameworkId} 框架`;
+    }
+    
     const files = fs.readdirSync(frameworksDir);
     
     // 查找匹配的框架文件
@@ -144,6 +169,10 @@ function loadFrameworkDescription(frameworkId: string): string {
 export async function POST(request: NextRequest) {
   try {
     console.log('[Frameworks API] Received POST request');
+    console.log('[Frameworks API] Environment check:', {
+      hasDeepSeekKey: !!process.env.DEEPSEEK_API_KEY,
+      cwd: process.cwd(),
+    });
     
     const body = await request.json();
     console.log('[Frameworks API] Request body:', JSON.stringify(body));
@@ -168,9 +197,18 @@ export async function POST(request: NextRequest) {
     const { input, model = 'deepseek', user_type = 'free' } = body;
     console.log('[Frameworks API] Processing:', { input: input.substring(0, 50), model, user_type });
 
+    // 检查 DeepSeek API Key
+    if (!process.env.DEEPSEEK_API_KEY) {
+      console.error('[Frameworks API] DEEPSEEK_API_KEY not configured');
+      return NextResponse.json(
+        { error: 'API 配置错误，请联系管理员' },
+        { status: 500 }
+      );
+    }
+
     // 加载框架摘要
     const frameworksSummary = loadFrameworksSummary();
-    console.log('[Frameworks API] Loaded frameworks summary');
+    console.log('[Frameworks API] Loaded frameworks summary, length:', frameworksSummary.length);
 
     // 调用 LLM 分析意图
     console.log('[Frameworks API] Calling DeepSeek API...');
@@ -191,6 +229,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('[Frameworks API] Error:', error);
+    console.error('[Frameworks API] Error stack:', error.stack);
     return NextResponse.json(
       { error: error.message || 'Internal server error' },
       { status: 500 }

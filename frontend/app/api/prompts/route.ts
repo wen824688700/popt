@@ -25,7 +25,19 @@ interface GeneratePromptRequest {
 // 加载框架详细内容
 function loadFrameworkContent(frameworkId: string): string {
   try {
-    const frameworksDir = path.join(process.cwd(), '..', 'skills-main', 'skills', 'prompt-optimizer', 'references', 'frameworks');
+    // 优先从 frontend/skills-main 读取（Vercel 部署）
+    let frameworksDir = path.join(process.cwd(), 'skills-main', 'skills', 'prompt-optimizer', 'references', 'frameworks');
+    
+    if (!fs.existsSync(frameworksDir)) {
+      // 尝试从上一级目录读取（本地开发）
+      frameworksDir = path.join(process.cwd(), '..', 'skills-main', 'skills', 'prompt-optimizer', 'references', 'frameworks');
+    }
+    
+    if (!fs.existsSync(frameworksDir)) {
+      console.warn('Frameworks directory not found');
+      return `# ${frameworkId}\n\n这是一个通用的 Prompt 优化框架。`;
+    }
+    
     const files = fs.readdirSync(frameworksDir);
     
     // 查找匹配的框架文件
