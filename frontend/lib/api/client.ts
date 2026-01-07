@@ -78,7 +78,7 @@ class APIClient {
    * Match frameworks based on user input
    */
   async matchFrameworks(request: MatchFrameworksRequest): Promise<MatchFrameworksResponse> {
-    const response = await fetch(`${this.baseURL}/api/v1/frameworks/match`, {
+    const response = await fetch(`${this.baseURL}/frameworks`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -87,8 +87,8 @@ class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -98,7 +98,7 @@ class APIClient {
    * Generate optimized prompt
    */
   async generatePrompt(request: GeneratePromptRequest): Promise<GeneratePromptResponse> {
-    const response = await fetch(`${this.baseURL}/api/v1/prompts/generate`, {
+    const response = await fetch(`${this.baseURL}/prompts`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -107,8 +107,8 @@ class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -119,7 +119,7 @@ class APIClient {
    */
   async getVersions(userId: string = 'test_user', limit: number = 10): Promise<Version[]> {
     const response = await fetch(
-      `${this.baseURL}/api/v1/versions?user_id=${userId}&limit=${limit}`,
+      `${this.baseURL}/versions?user_id=${userId}&limit=${limit}`,
       {
         method: 'GET',
         headers: {
@@ -129,8 +129,8 @@ class APIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -140,7 +140,7 @@ class APIClient {
    * Save a new version
    */
   async saveVersion(request: SaveVersionRequest): Promise<Version> {
-    const response = await fetch(`${this.baseURL}/api/v1/versions`, {
+    const response = await fetch(`${this.baseURL}/versions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -149,8 +149,8 @@ class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -160,7 +160,7 @@ class APIClient {
    * Get a specific version
    */
   async getVersion(versionId: string): Promise<Version> {
-    const response = await fetch(`${this.baseURL}/api/v1/versions/${versionId}`, {
+    const response = await fetch(`${this.baseURL}/versions/${versionId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -168,8 +168,8 @@ class APIClient {
     });
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -180,7 +180,7 @@ class APIClient {
    */
   async rollbackVersion(versionId: string, userId: string = 'test_user'): Promise<Version> {
     const response = await fetch(
-      `${this.baseURL}/api/v1/versions/${versionId}/rollback?user_id=${userId}`,
+      `${this.baseURL}/versions/${versionId}/rollback?user_id=${userId}`,
       {
         method: 'POST',
         headers: {
@@ -190,8 +190,8 @@ class APIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
@@ -205,7 +205,7 @@ class APIClient {
     const timezoneOffset = -new Date().getTimezoneOffset();
     
     const response = await fetch(
-      `${this.baseURL}/api/v1/quota?user_id=${userId}&account_type=${accountType}&timezone_offset=${timezoneOffset}`,
+      `${this.baseURL}/quota?user_id=${userId}&account_type=${accountType}&timezone_offset=${timezoneOffset}`,
       {
         method: 'GET',
         headers: {
@@ -215,8 +215,8 @@ class APIClient {
     );
 
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-      throw new Error(error.detail || `HTTP ${response.status}`);
+      const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+      throw new Error(error.error || error.detail || `HTTP ${response.status}`);
     }
 
     return response.json();
