@@ -9,9 +9,13 @@ import os
 # 添加当前目录到 Python 路径
 sys.path.insert(0, os.path.dirname(__file__))
 
-from _config import get_settings, get_cached_service
-from _services.llm_factory import LLMFactory
-from _services.framework_matcher import FrameworkMatcher
+try:
+    from _config import get_settings, get_cached_service
+    from _services.llm_factory import LLMFactory
+    from _services.framework_matcher import FrameworkMatcher
+except ImportError as e:
+    print(f"Import error: {e}")
+    # 如果导入失败，返回错误
 
 
 class handler(BaseHTTPRequestHandler):
@@ -21,9 +25,17 @@ class handler(BaseHTTPRequestHandler):
         """处理 CORS 预检请求"""
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
+    
+    def do_GET(self):
+        """处理 GET 请求 - 返回 API 信息"""
+        self._json_response({
+            "message": "Framework Matching API",
+            "method": "POST",
+            "endpoint": "/api/frameworks"
+        })
     
     def do_POST(self):
         """处理 POST 请求"""
@@ -68,6 +80,9 @@ class handler(BaseHTTPRequestHandler):
             })
             
         except Exception as e:
+            import traceback
+            error_detail = traceback.format_exc()
+            print(f"Error: {error_detail}")
             self._error_response(f"框架匹配失败: {str(e)}", 500)
     
     def _json_response(self, data, status=200):
