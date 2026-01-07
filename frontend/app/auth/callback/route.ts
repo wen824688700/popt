@@ -2,7 +2,7 @@
  * Supabase Auth Callback 路由
  * 处理 OAuth 登录后的回调
  */
-import { createServerClient } from '@supabase/ssr';
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 
@@ -48,7 +48,7 @@ export async function GET(request: Request) {
           getAll() {
             return cookieStore.getAll();
           },
-          setAll(cookiesToSet) {
+          setAll(cookiesToSet: Array<{ name: string; value: string; options: CookieOptions }>) {
             cookiesToSet.forEach(({ name, value, options }) => {
               // 同时设置到请求和响应中
               try {
