@@ -1,18 +1,4 @@
-<<<<<<< HEAD
-/**
- * Supabase 浏览器客户端
- * 用于 Client Components
- */
-import { createBrowserClient } from '@supabase/ssr';
-
-export function createClient() {
-  return createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
-=======
-import { createClient } from '@supabase/supabase-js';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 
 function requireEnv(name: string, value: string | undefined): string {
   if (value) return value;
@@ -22,7 +8,7 @@ function requireEnv(name: string, value: string | undefined): string {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(
+export const supabase = createSupabaseClient(
   requireEnv('NEXT_PUBLIC_SUPABASE_URL', supabaseUrl),
   requireEnv('NEXT_PUBLIC_SUPABASE_ANON_KEY', supabaseAnonKey),
   {
@@ -34,4 +20,7 @@ export const supabase = createClient(
   }
 );
 
->>>>>>> 26a3861 (fix: deploy to single vercel project (next+fastapi))
+// Back-compat helper: some parts of the app import `createClient()` from this module.
+export function createClient() {
+  return supabase;
+}
