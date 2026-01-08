@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
+    "test": "node -e \"console.log('No frontend unit tests configured yet')\"",
     "test:auth": "node scripts/test-auth.js"
   },
   "dependencies": {

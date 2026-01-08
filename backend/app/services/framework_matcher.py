@@ -1,11 +1,11 @@
 """
 Framework Matcher Service for matching user input to appropriate frameworks
 """
-import os
 import glob
-from typing import List
-from pydantic import BaseModel
 import logging
+import os
+
+from pydantic import BaseModel
 
 from .base_llm import BaseLLMService
 
@@ -29,19 +29,19 @@ class UserType:
 
 class FrameworkMatcher:
     """根据用户输入匹配最合适的 Prompt 框架"""
-    
+
     def __init__(self, llm_service: BaseLLMService):
         self.llm_service = llm_service
         self.frameworks_summary = self._load_frameworks_summary()
         self.frameworks_descriptions = self._load_frameworks_descriptions()
-    
+
     def _load_frameworks_summary(self) -> str:
         """加载 Frameworks_Summary.md 表格"""
         try:
             # 获取项目根目录
             current_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-            
+
             # 构建文件路径
             summary_path = os.path.join(
                 project_root,
@@ -51,13 +51,13 @@ class FrameworkMatcher:
                 "references",
                 "Frameworks_Summary.md"
             )
-            
-            with open(summary_path, "r", encoding="utf-8") as f:
+
+            with open(summary_path, encoding="utf-8") as f:
                 content = f.read()
-            
+
             logger.info(f"Loaded frameworks summary from {summary_path}")
             return content
-            
+
         except FileNotFoundError:
             logger.error(f"Frameworks_Summary.md not found at {summary_path}")
             # 返回一个简化的框架列表作为后备
@@ -74,7 +74,7 @@ class FrameworkMatcher:
         except Exception as e:
             logger.error(f"Error loading frameworks summary: {e}")
             raise
-    
+
     def _load_frameworks_descriptions(self) -> dict:
         """加载所有框架的详细描述"""
         descriptions = {}
@@ -82,7 +82,7 @@ class FrameworkMatcher:
             # 获取项目根目录
             current_dir = os.path.dirname(os.path.abspath(__file__))
             project_root = os.path.dirname(os.path.dirname(os.path.dirname(current_dir)))
-            
+
             # 构建框架目录路径
             frameworks_dir = os.path.join(
                 project_root,
@@ -92,33 +92,33 @@ class FrameworkMatcher:
                 "references",
                 "frameworks"
             )
-            
+
             # 遍历所有框架文件
             framework_files = glob.glob(os.path.join(frameworks_dir, "*.md"))
-            
+
             for file_path in framework_files:
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         content = f.read()
-                    
+
                     # 提取框架名称和概述
                     framework_name = self._extract_framework_name(content)
                     overview = self._extract_overview(content)
-                    
+
                     if framework_name and overview:
                         descriptions[framework_name] = overview
-                        
+
                 except Exception as e:
                     logger.warning(f"Error loading framework file {file_path}: {e}")
                     continue
-            
+
             logger.info(f"Loaded {len(descriptions)} framework descriptions")
             return descriptions
-            
+
         except Exception as e:
             logger.error(f"Error loading framework descriptions: {e}")
             return {}
-    
+
     def _extract_framework_name(self, content: str) -> str:
         """从框架文档中提取框架名称"""
         lines = content.split('\n')
@@ -126,13 +126,13 @@ class FrameworkMatcher:
             if line.startswith('# ') and 'Framework' in line:
                 return line.replace('# ', '').strip()
         return ""
-    
+
     def _extract_overview(self, content: str) -> str:
         """从框架文档中提取概述部分"""
         lines = content.split('\n')
         overview_started = False
         overview_lines = []
-        
+
         for line in lines:
             if line.startswith('## 概述'):
                 overview_started = True
@@ -142,21 +142,21 @@ class FrameworkMatcher:
                     break
                 if line.strip():  # 跳过空行
                     overview_lines.append(line.strip())
-        
+
         return ' '.join(overview_lines) if overview_lines else ""
-    
+
     async def match_frameworks(
-        self, 
-        user_input: str, 
+        self,
+        user_input: str,
         user_type: str = UserType.FREE
-    ) -> List[FrameworkCandidate]:
+    ) -> list[FrameworkCandidate]:
         """
         匹配 1-3 个最合适的框架
-        
+
         Args:
             user_input: 用户输入的原始提示词或需求
             user_type: 用户类型（Free/Pro）
-        
+
         Returns:
             1-3 个框架候选，按匹配度排序
         """
@@ -166,30 +166,30 @@ class FrameworkMatcher:
                 user_input=user_input,
                 frameworks_context=self.frameworks_summary
             )
-            
+
             # 构建框架候选列表
             candidates = []
             for idx, framework_id in enumerate(framework_ids):
                 # 尝试多种方式查找框架描述
                 description = None
-                
+
                 # 1. 直接匹配
                 description = self.frameworks_descriptions.get(framework_id)
-                
+
                 # 2. 添加 " Framework" 后缀尝试
                 if not description:
                     description = self.frameworks_descriptions.get(f"{framework_id} Framework")
-                
+
                 # 3. 移除 " Framework" 后缀尝试
                 if not description and framework_id.endswith(" Framework"):
                     base_name = framework_id.replace(" Framework", "")
                     description = self.frameworks_descriptions.get(base_name)
-                
+
                 # 4. 使用默认描述
                 if not description:
                     description = f"适用于用户需求的 {framework_id} 框架"
                     logger.warning(f"No description found for framework: {framework_id}")
-                
+
                 candidate = FrameworkCandidate(
                     id=framework_id,
                     name=framework_id,
@@ -198,10 +198,10 @@ class FrameworkMatcher:
                     reasoning=f"基于用户输入分析，{framework_id} 最适合此场景"
                 )
                 candidates.append(candidate)
-            
+
             logger.info(f"Matched {len(candidates)} frameworks for user input")
             return candidates
-            
+
         except Exception as e:
             logger.error(f"Error matching frameworks: {e}")
             # 返回一个默认框架作为后备

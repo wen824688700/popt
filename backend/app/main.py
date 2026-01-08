@@ -6,7 +6,10 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api import frameworks, prompts, quota, versions
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 app = FastAPI(
     title="Prompt Optimizer API",
@@ -21,7 +24,10 @@ default_origins = [
 ]
 
 env_origins_raw = os.getenv("CORS_ALLOW_ORIGINS", "").strip()
-env_origins = [o.strip() for o in env_origins_raw.split(",") if o.strip()] if env_origins_raw else []
+if env_origins_raw:
+    env_origins = [o.strip() for o in env_origins_raw.split(",") if o.strip()]
+else:
+    env_origins = []
 allow_origins = env_origins or default_origins
 
 _origin_regex_raw = os.getenv("CORS_ALLOW_ORIGIN_REGEX")

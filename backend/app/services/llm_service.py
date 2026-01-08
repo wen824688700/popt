@@ -1,10 +1,10 @@
 """
 LLM Service for interacting with DeepSeek API
 """
-import httpx
-from typing import List, Dict, Optional
-import json
 import logging
+
+import httpx
+
 from .base_llm import BaseLLMService
 
 logger = logging.getLogger(__name__)
@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 class DeepSeekService(BaseLLMService):
     """Service for interacting with DeepSeek LLM API"""
-    
+
     def __init__(self, api_key: str, base_url: str = "https://api.deepseek.com"):
         self.api_key = api_key
         self.base_url = base_url
@@ -23,24 +23,25 @@ class DeepSeekService(BaseLLMService):
                 "Content-Type": "application/json"
             }
         )
-    
+
     async def analyze_intent(
-        self, 
-        user_input: str, 
+        self,
+        user_input: str,
         frameworks_context: str
-    ) -> List[str]:
+    ) -> list[str]:
         """
         分析用户意图并返回推荐的框架 ID
-        
+
         Args:
             user_input: 用户输入的原始提示词或需求
             frameworks_context: 框架映射表上下文（Frameworks_Summary.md）
-        
+
         Returns:
             1-3 个框架 ID 列表
         """
         try:
-            prompt = f"""你是一个 Prompt 工程专家。请分析用户的需求，从以下框架列表中选择 1-3 个最合适的框架。
+            prompt = f"""\
+你是一个 Prompt 工程专家。请分析用户的需求，从以下框架列表中选择 1-3 个最合适的框架。
 
 框架列表：
 {frameworks_context}
@@ -56,56 +57,67 @@ class DeepSeekService(BaseLLMService):
                 json={
                     "model": "deepseek-chat",
                     "messages": [
-                        {"role": "system", "content": "你是一个 Prompt 工程专家，擅长分析用户需求并推荐合适的框架。"},
-                        {"role": "user", "content": prompt}
+                        {
+                            "role": "system",
+                            "content": (
+                                "你是一个 Prompt 工程专家，"
+                                "擅长分析用户需求并推荐合适的框架。"
+                            ),
+                        },
+                        {"role": "user", "content": prompt},
                     ],
                     "temperature": 0.3,
                     "max_tokens": 100
                 }
             )
-            
+
             response.raise_for_status()
             result = response.json()
-            
+
             # 解析返回的框架 ID
             content = result["choices"][0]["message"]["content"].strip()
             framework_ids = [fid.strip() for fid in content.split(",")]
-            
+
             # 确保返回 1-3 个框架
             framework_ids = framework_ids[:3]
-            
-            logger.info(f"Analyzed intent for input: {user_input[:50]}... -> {framework_ids}")
+
+            logger.info(
+                "Analyzed intent for input: %s... -> %s",
+                user_input[:50],
+                framework_ids,
+            )
             return framework_ids
-            
+
         except httpx.HTTPError as e:
             logger.error(f"HTTP error during intent analysis: {e}")
             raise Exception(f"LLM API 调用失败: {str(e)}")
         except Exception as e:
             logger.error(f"Error during intent analysis: {e}")
             raise Exception(f"意图分析失败: {str(e)}")
-    
+
     async def generate_prompt(
         self,
         user_input: str,
         framework_doc: str,
-        clarification_answers: Dict[str, str],
-        attachment_content: Optional[str] = None
+        clarification_answers: dict[str, str],
+        attachment_content: str | None = None
     ) -> str:
         """
         生成优化后的提示词
-        
+
         Args:
             user_input: 用户原始输入
             framework_doc: 完整的框架文档
             clarification_answers: 追问问题的答案
             attachment_content: 附件内容（可选）
-        
+
         Returns:
             优化后的 Markdown 格式提示词
         """
         try:
             # 构建系统提示
-            system_prompt = f"""你是一个专业的 Prompt 工程师。请根据以下框架文档和用户提供的信息，生成一个优化后的提示词。
+            system_prompt = f"""\
+你是一个专业的 Prompt 工程师。请根据以下框架文档和用户提供的信息，生成一个优化后的提示词。
 
 框架文档：
 {framework_doc}
@@ -138,7 +150,10 @@ class DeepSeekService(BaseLLMService):
             if attachment_content:
                 user_prompt += f"\n\n参考附件内容：\n{attachment_content}"
 
-            user_prompt += "\n\n请基于上述框架文档和用户信息，生成一个完整的、优化后的提示词（使用 Markdown 格式）："
+            user_prompt += (
+                "\n\n请基于上述框架文档和用户信息，生成一个完整的、优化后的提示词"
+                "（使用 Markdown 格式）："
+            )
 
             response = await self.client.post(
                 f"{self.base_url}/v1/chat/completions",
@@ -152,22 +167,22 @@ class DeepSeekService(BaseLLMService):
                     "max_tokens": 3000
                 }
             )
-            
+
             response.raise_for_status()
             result = response.json()
-            
+
             generated_prompt = result["choices"][0]["message"]["content"].strip()
-            
+
             logger.info(f"Generated prompt for input: {user_input[:50]}...")
             return generated_prompt
-            
+
         except httpx.HTTPError as e:
             logger.error(f"HTTP error during prompt generation: {e}")
             raise Exception(f"LLM API 调用失败: {str(e)}")
         except Exception as e:
             logger.error(f"Error during prompt generation: {e}")
             raise Exception(f"提示词生成失败: {str(e)}")
-    
+
     async def close(self):
         """关闭 HTTP 客户端"""
         await self.client.aclose()

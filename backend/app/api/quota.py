@@ -28,12 +28,12 @@ async def get_quota(
 ):
     """
     获取用户配额信息
-    
+
     Args:
         user_id: 用户 ID
         account_type: 账户类型（free/pro）
         timezone_offset: 用户时区偏移量（分钟），例如 +480 表示 UTC+8
-    
+
     返回用户当日已用配额、总配额和重置时间
     """
     try:
@@ -42,14 +42,14 @@ async def get_quota(
             account_type=account_type,
             user_timezone_offset=timezone_offset
         )
-        
+
         return QuotaResponse(
             used=status.used,
             total=status.total,
             reset_time=status.reset_time.isoformat(),
             can_generate=status.can_generate
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=500,
