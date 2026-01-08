@@ -2,6 +2,7 @@
 LLM Service for interacting with DeepSeek API
 """
 import logging
+from typing import Any
 
 import httpx
 
@@ -17,12 +18,60 @@ class DeepSeekService(BaseLLMService):
         self.api_key = api_key
         self.base_url = base_url
         self.client = httpx.AsyncClient(
-            timeout=60.0,
+            timeout=httpx.Timeout(120.0, connect=10.0),  # 增加超时到 120 秒
             headers={
                 "Authorization": f"Bearer {api_key}",
                 "Content-Type": "application/json"
-            }
+            },
+            limits=httpx.Limits(max_keepalive_connections=5, max_connections=10)
         )
+        self.max_retries = 3  # 最大重试次数
+
+    async def _call_api_with_retry(self, payload: dict[str, Any]) -> dict[str, Any]:
+        """
+        带重试机制的 API 调用
+
+        Args:
+            payload: API 请求负载
+
+        Returns:
+            API 响应 JSON
+
+        Raises:
+            Exception: API 调用失败
+        """
+        last_error = None
+
+        for attempt in range(self.max_retries):
+            try:
+                response = await self.client.post(
+                    f"{self.base_url}/v1/chat/completions",
+                    json=payload
+                )
+                response.raise_for_status()
+                return response.json()
+
+            except (httpx.TimeoutException, httpx.NetworkError, httpx.RemoteProtocolError) as e:
+                last_error = e
+                logger.warning(
+                    f"API 调用失败 (尝试 {attempt + 1}/{self.max_retries}): {type(e).__name__}: {str(e)}"
+                )
+                if attempt < self.max_retries - 1:
+                    # 等待后重试（指数退避）
+                    import asyncio
+                    await asyncio.sleep(2 ** attempt)
+                continue
+
+            except httpx.HTTPStatusError as e:
+                logger.error(f"HTTP 状态错误: {e.response.status_code} - {e.response.text}")
+                raise Exception(f"LLM API 返回错误: {e.response.status_code}")
+
+            except Exception as e:
+                logger.error(f"未预期的错误: {type(e).__name__}: {str(e)}")
+                raise Exception(f"LLM API 调用失败: {str(e)}")
+
+        # 所有重试都失败
+        raise Exception(f"LLM API 调用失败（已重试 {self.max_retries} 次）: {str(last_error)}")
 
     async def analyze_intent(
         self,
@@ -52,27 +101,23 @@ class DeepSeekService(BaseLLMService):
 请仅返回 1-3 个最合适的框架 ID（用逗号分隔），不要包含其他内容。
 例如：RACEF,Chain-of-Thought"""
 
-            response = await self.client.post(
-                f"{self.base_url}/v1/chat/completions",
-                json={
-                    "model": "deepseek-chat",
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": (
-                                "你是一个 Prompt 工程专家，"
-                                "擅长分析用户需求并推荐合适的框架。"
-                            ),
-                        },
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.3,
-                    "max_tokens": 100
-                }
-            )
+            payload = {
+                "model": "deepseek-chat",
+                "messages": [
+                    {
+                        "role": "system",
+                        "content": (
+                            "你是一个 Prompt 工程专家，"
+                            "擅长分析用户需求并推荐合适的框架。"
+                        ),
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+                "temperature": 0.3,
+                "max_tokens": 100
+            }
 
-            response.raise_for_status()
-            result = response.json()
+            result = await self._call_api_with_retry(payload)
 
             # 解析返回的框架 ID
             content = result["choices"][0]["message"]["content"].strip()
@@ -88,9 +133,6 @@ class DeepSeekService(BaseLLMService):
             )
             return framework_ids
 
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error during intent analysis: {e}")
-            raise Exception(f"LLM API 调用失败: {str(e)}")
         except Exception as e:
             logger.error(f"Error during intent analysis: {e}")
             raise Exception(f"意图分析失败: {str(e)}")
@@ -155,30 +197,23 @@ class DeepSeekService(BaseLLMService):
                 "（使用 Markdown 格式）："
             )
 
-            response = await self.client.post(
-                f"{self.base_url}/v1/chat/completions",
-                json={
-                    "model": "deepseek-chat",
-                    "messages": [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt}
-                    ],
-                    "temperature": 0.7,
-                    "max_tokens": 3000
-                }
-            )
+            payload = {
+                "model": "deepseek-chat",
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                "temperature": 0.7,
+                "max_tokens": 3000
+            }
 
-            response.raise_for_status()
-            result = response.json()
+            result = await self._call_api_with_retry(payload)
 
             generated_prompt = result["choices"][0]["message"]["content"].strip()
 
             logger.info(f"Generated prompt for input: {user_input[:50]}...")
             return generated_prompt
 
-        except httpx.HTTPError as e:
-            logger.error(f"HTTP error during prompt generation: {e}")
-            raise Exception(f"LLM API 调用失败: {str(e)}")
         except Exception as e:
             logger.error(f"Error during prompt generation: {e}")
             raise Exception(f"提示词生成失败: {str(e)}")
