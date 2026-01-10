@@ -1,12 +1,14 @@
 """
 Quota Manager Service for managing user quotas
 支持失败退回和重试机制
+使用 Supabase REST API 持久化配额数据
 """
 import logging
 import os
 from datetime import UTC, datetime, timedelta
 
 from pydantic import BaseModel
+from app.config import get_settings
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +52,61 @@ class QuotaManager:
     """管理用户配额"""
 
     def __init__(self):
-        # 使用内存存储（生产环境应使用数据库）
-        self.quotas: dict[str, int] = {}
-        self.retry_counts: dict[str, int] = {}  # 记录重试次数
+        settings = get_settings()
+        self.settings = settings
         self.FREE_QUOTA = 10  # 免费用户每天10次
         self.PRO_QUOTA = 100
         self.MAX_RETRIES = 1  # 允许的最大重试次数
+        self._http_client = None
 
         # 检查是否为开发/测试环境
-        self.environment = os.getenv("ENVIRONMENT", "development").lower()
-        self.skip_quota_check = self.environment in ["development", "test", "testing"]
+        self.dev_mode = settings.dev_mode
+        self.skip_quota_check = self.dev_mode
 
         if self.skip_quota_check:
-            logger.info(f"Quota check disabled for {self.environment} environment")
+            logger.info("Quota check disabled for dev mode")
+            # 开发模式使用内存存储
+            self.quotas: dict[str, int] = {}
+            self.retry_counts: dict[str, int] = {}
+        else:
+            logger.info("QuotaManager initialized in production mode (Supabase)")
+    
+    def _get_client(self):
+        """延迟初始化 HTTP 客户端（使用 Supabase REST API）"""
+        if self._http_client is None and not self.dev_mode:
+            try:
+                import httpx
+                
+                supabase_url = self.settings.supabase_url
+                supabase_key = self.settings.supabase_key
+                
+                if supabase_url and supabase_key:
+                    self._http_client = httpx.AsyncClient(
+                        base_url=f"{supabase_url}/rest/v1",
+                        headers={
+                            "apikey": supabase_key,
+                            "Authorization": f"Bearer {supabase_key}",
+                            "Content-Type": "application/json",
+                            "Prefer": "return=representation"
+                        },
+                        timeout=30.0
+                    )
+                    logger.info("✅ Supabase REST API client initialized (QuotaManager)")
+                else:
+                    logger.warning("Supabase credentials not found, falling back to dev mode")
+                    self.dev_mode = True
+                    self.skip_quota_check = True
+                    self.quotas = {}
+                    self.retry_counts = {}
+            except Exception as e:
+                logger.error(f"Failed to initialize HTTP client: {e}")
+                logger.warning("Falling back to dev mode")
+                self.dev_mode = True
+                self.skip_quota_check = True
+                self.quotas = {}
+                self.retry_counts = {}
+        
+        return self._http_client
 
     def _get_user_date(self, user_timezone_offset: int = 0) -> str:
         """
@@ -129,20 +173,61 @@ class QuotaManager:
             QuotaStatus 包含剩余配额和重置时间
         """
         try:
-            quota_key = self._get_user_quota_key(user_id, user_timezone_offset)
-
             # 获取配额限制
             total = self.PRO_QUOTA if account_type == "pro" else self.FREE_QUOTA
 
-            # 获取已使用配额
-            used = self.quotas.get(quota_key, 0)
-
             # 开发/测试环境跳过配额检查
             if self.skip_quota_check:
-                can_generate = True
-            else:
-                # 计算是否可以生成
-                can_generate = used < total
+                status = QuotaStatus(
+                    user_id=user_id,
+                    used=0,
+                    total=total,
+                    reset_time=self._get_next_reset_time(user_timezone_offset),
+                    can_generate=True
+                )
+                return status
+
+            # 生产模式：从 Supabase 查询
+            client = self._get_client()
+            if not client:
+                # 回退到允许生成
+                logger.warning("HTTP client not available, allowing generation")
+                return QuotaStatus(
+                    user_id=user_id,
+                    used=0,
+                    total=total,
+                    reset_time=self._get_next_reset_time(user_timezone_offset),
+                    can_generate=True
+                )
+            
+            # 获取今天的日期
+            quota_date = self._get_user_date(user_timezone_offset)
+            
+            # 查询今天的配额记录
+            response = await client.get(
+                "/user_quotas",
+                params={
+                    "user_id": f"eq.{user_id}",
+                    "quota_date": f"eq.{quota_date}"
+                }
+            )
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to check quota: {response.status_code}")
+                # 出错时允许生成
+                return QuotaStatus(
+                    user_id=user_id,
+                    used=0,
+                    total=total,
+                    reset_time=self._get_next_reset_time(user_timezone_offset),
+                    can_generate=True
+                )
+            
+            data_list = response.json()
+            used = data_list[0]['used_count'] if data_list else 0
+            
+            # 计算是否可以生成
+            can_generate = used < total
 
             # 获取重置时间
             reset_time = self._get_next_reset_time(user_timezone_offset)
@@ -156,7 +241,7 @@ class QuotaManager:
             )
 
             logger.info(
-                "Checked quota for user %s: %s/%s (can_generate: %s)",
+                "✅ Checked quota for user %s: %s/%s (can_generate: %s)",
                 user_id,
                 used,
                 total,
@@ -166,7 +251,14 @@ class QuotaManager:
 
         except Exception as e:
             logger.error(f"Error checking quota for user {user_id}: {e}")
-            raise
+            # 出错时允许生成，避免阻塞用户
+            return QuotaStatus(
+                user_id=user_id,
+                used=0,
+                total=total,
+                reset_time=self._get_next_reset_time(user_timezone_offset),
+                can_generate=True
+            )
 
     async def start_generation(
         self,
@@ -249,7 +341,7 @@ class QuotaManager:
         user_timezone_offset: int = 0
     ) -> bool:
         """
-        消耗一次配额（兼容旧接口）
+        消耗一次配额
 
         Args:
             user_id: 用户 ID
@@ -259,11 +351,69 @@ class QuotaManager:
         Returns:
             是否成功消耗（配额不足返回 False）
         """
-        transaction = await self.start_generation(user_id, account_type, None, user_timezone_offset)
-        if transaction:
-            await transaction.commit()
+        try:
+            # 开发/测试环境跳过配额检查
+            if self.skip_quota_check:
+                logger.info(f"Quota check skipped for user {user_id} (dev mode)")
+                return True
+
+            # 生产模式：使用 Supabase
+            client = self._get_client()
+            if not client:
+                logger.warning("HTTP client not available, allowing generation")
+                return True
+            
+            # 先检查配额
+            status = await self.check_quota(user_id, account_type, user_timezone_offset)
+            if not status.can_generate:
+                logger.warning(f"User {user_id} quota exceeded: {status.used}/{status.total}")
+                return False
+            
+            # 获取今天的日期
+            quota_date = self._get_user_date(user_timezone_offset)
+            
+            # 尝试更新现有记录（使用 UPSERT）
+            # PostgreSQL 的 ON CONFLICT 语法通过 Supabase 的 upsert 参数实现
+            response = await client.post(
+                "/user_quotas",
+                json={
+                    "user_id": user_id,
+                    "quota_date": quota_date,
+                    "used_count": status.used + 1,
+                    "account_type": account_type
+                },
+                params={
+                    "on_conflict": "user_id,quota_date"
+                }
+            )
+            
+            # 如果记录已存在，使用 PATCH 更新
+            if response.status_code == 409 or response.status_code == 400:
+                # 记录已存在，使用 PATCH 更新
+                response = await client.patch(
+                    "/user_quotas",
+                    json={
+                        "used_count": status.used + 1,
+                        "updated_at": datetime.now(UTC).isoformat()
+                    },
+                    params={
+                        "user_id": f"eq.{user_id}",
+                        "quota_date": f"eq.{quota_date}"
+                    }
+                )
+            
+            if response.status_code not in [200, 201, 204]:
+                logger.error(f"Failed to consume quota: {response.status_code} - {response.text}")
+                # 出错时允许生成，避免阻塞用户
+                return True
+            
+            logger.info(f"✅ Consumed quota for user {user_id}: {status.used + 1}/{status.total}")
             return True
-        return False
+
+        except Exception as e:
+            logger.error(f"Error consuming quota for user {user_id}: {e}")
+            # 出错时允许生成，避免阻塞用户
+            return True
 
     async def reset_daily_quotas(self):
         """
