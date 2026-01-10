@@ -29,9 +29,9 @@ const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 const mockDevUser: User = {
   id: 'dev-user-001',
   email: 'dev@test.com',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=dev',
+  avatar: '', // 不使用外部头像，让 UserAvatar 组件显示首字母
   name: '开发测试用户',
-  accountType: 'pro', // 开发模式默认 Pro 账户
+  accountType: 'free', // 测试阶段使用 free 账户
 };
 
 // 将 Supabase User 转换为应用 User

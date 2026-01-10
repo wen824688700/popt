@@ -6,7 +6,9 @@ import EditorPanel from '@/components/EditorPanel';
 import MarkdownTab from '@/components/MarkdownTab';
 import VersionHistory from '@/components/VersionHistory';
 import VersionComparison from '@/components/VersionComparison';
+import UserAvatar from '@/components/UserAvatar';
 import { apiClient } from '@/lib/api/client';
+import { useAuthStore } from '@/lib/stores/authStore';
 
 interface Version {
   id: string;
@@ -21,6 +23,7 @@ type ViewMode = 'editor' | 'comparison';
 
 export default function WorkspacePage() {
   const router = useRouter();
+  const { isAuthenticated, user } = useAuthStore();
   const [outputContent, setOutputContent] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [versions, setVersions] = useState<Version[]>([]);
@@ -243,12 +246,25 @@ export default function WorkspacePage() {
                 </svg>
                 <span className="font-medium">首页</span>
               </button>
-              <button
-                onClick={() => router.push('/account')}
-                className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-medium rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300"
-              >
-                登录 / 注册
-              </button>
+              
+              {/* 根据认证状态显示不同按钮 */}
+              {isAuthenticated && user ? (
+                <button
+                  onClick={() => router.push('/account')}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#1a2332] hover:bg-[#242d3d] rounded-xl transition-colors border border-[#3d4a5c]"
+                  title="账户设置"
+                >
+                  <UserAvatar user={user} size="sm" />
+                  <span className="text-sm text-gray-300 font-medium">{user.name || user.email}</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => router.push('/account')}
+                  className="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-cyan-600 text-white font-medium rounded-xl shadow-lg shadow-purple-500/30 hover:shadow-purple-500/50 transition-all duration-300"
+                >
+                  登录 / 注册
+                </button>
+              )}
             </div>
           </div>
         </div>
