@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS feature_options (
 -- 2. 用户投票表
 CREATE TABLE IF NOT EXISTS user_votes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,  -- 改为 TEXT 类型，支持任意用户 ID 格式
   option_id UUID NOT NULL REFERENCES feature_options(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, option_id)
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS user_votes (
 -- 3. 用户反馈表
 CREATE TABLE IF NOT EXISTS user_feedback (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL,  -- 改为 TEXT 类型，支持任意用户 ID 格式
   content TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -56,21 +56,24 @@ CREATE POLICY "feature_options_select_policy" ON feature_options
   FOR SELECT USING (true);
 
 -- user_votes: 用户只能查看和操作自己的投票
+-- 注意：由于 user_id 是 TEXT 类型，RLS 策略需要通过应用层控制
+-- 这里允许所有操作，安全性由后端 API 保证
 CREATE POLICY "user_votes_select_policy" ON user_votes
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT USING (true);
 
 CREATE POLICY "user_votes_insert_policy" ON user_votes
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT WITH CHECK (true);
 
 CREATE POLICY "user_votes_delete_policy" ON user_votes
-  FOR DELETE USING (auth.uid() = user_id);
+  FOR DELETE USING (true);
 
 -- user_feedback: 用户只能查看和创建自己的反馈
+-- 同样，安全性由后端 API 保证
 CREATE POLICY "user_feedback_select_policy" ON user_feedback
-  FOR SELECT USING (auth.uid() = user_id);
+  FOR SELECT USING (true);
 
 CREATE POLICY "user_feedback_insert_policy" ON user_feedback
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+  FOR INSERT WITH CHECK (true);
 
 -- 8. 创建视图：统计每个选项的投票数（可选，用于管理后台）
 CREATE OR REPLACE VIEW feature_options_with_votes AS

@@ -21,6 +21,24 @@ router = APIRouter(prefix="/api/v1/feedback", tags=["feedback"])
 feedback_service = FeedbackService()
 
 
+@router.get("/debug")
+async def debug_config():
+    """
+    调试端点：检查配置状态（仅用于诊断）
+    """
+    from app.config import get_settings
+    settings = get_settings()
+    
+    return {
+        "dev_mode": settings.dev_mode,
+        "environment": settings.environment,
+        "supabase_url_configured": bool(settings.supabase_url),
+        "supabase_key_configured": bool(settings.supabase_key),
+        "supabase_client_initialized": feedback_service.supabase is not None,
+        "supabase_url_preview": settings.supabase_url[:30] + "..." if settings.supabase_url else None,
+    }
+
+
 @router.get("/options", response_model=List[FeatureOptionWithVotes])
 async def get_feature_options(
     user_id: str | None = Header(None, alias="x-user-id")

@@ -6,8 +6,6 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
-from supabase import Client, create_client
-
 from app.config import get_settings
 
 logger = logging.getLogger(__name__)
@@ -19,26 +17,38 @@ class FeedbackService:
     def __init__(self):
         settings = get_settings()
         self.settings = settings
-        self._supabase: Client | None = None
+        self._supabase = None
     
     @property
-    def supabase(self) -> Client | None:
+    def supabase(self):
         """延迟初始化 Supabase 客户端"""
-        if self._supabase is None and not self.settings.dev_mode:
-            if self.settings.supabase_url and self.settings.supabase_key:
-                try:
-                    self._supabase = create_client(
-                        self.settings.supabase_url,
-                        self.settings.supabase_key
-                    )
-                    logger.info("Supabase 客户端初始化成功（反馈功能）")
-                except Exception as e:
-                    logger.error(f"Supabase 客户端初始化失败: {e}")
-                    logger.warning("将回退到模拟数据模式（票数不会更新）")
-            else:
-                logger.warning("Supabase 配置缺失，反馈功能将使用模拟数据")
-        elif self.settings.dev_mode:
-            logger.info("开发模式已启用，反馈功能将使用模拟数据")
+        if self._supabase is None:
+            if self.settings.dev_mode:
+                logger.warning("⚠️ 开发模式已启用 (DEV_MODE=true)，反馈功能将使用模拟数据")
+                return None
+            
+            if not self.settings.supabase_url:
+                logger.error("❌ SUPABASE_URL 未配置，反馈功能将使用模拟数据")
+                return None
+            
+            if not self.settings.supabase_key:
+                logger.error("❌ SUPABASE_KEY 未配置，反馈功能将使用模拟数据")
+                return None
+            
+            try:
+                # 延迟导入，避免在模块加载时导入
+                from supabase import create_client
+                
+                self._supabase = create_client(
+                    self.settings.supabase_url,
+                    self.settings.supabase_key
+                )
+                logger.info(f"✅ Supabase 客户端初始化成功（反馈功能）- URL: {self.settings.supabase_url[:30]}...")
+            except Exception as e:
+                logger.error(f"❌ Supabase 客户端初始化失败: {e}")
+                logger.warning("将回退到模拟数据模式（票数不会更新）")
+                return None
+        
         return self._supabase
 
     async def get_feature_options(self, user_id: str | None = None) -> List[dict]:
