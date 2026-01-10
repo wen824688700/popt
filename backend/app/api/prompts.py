@@ -159,14 +159,34 @@ async def generate_prompt(request: GenerateRequest):
             attachment_content=request.attachment_content
         )
 
+        # 计算版本号：查询该用户该主题的最新版本
+        topic = request.input[:20] + ("..." if len(request.input) > 20 else "")
+        existing_versions = await version_manager.get_versions(
+            user_id=request.user_id,
+            limit=100  # 获取足够多的版本以便过滤
+        )
+        
+        # 过滤出相同主题的版本
+        topic_versions = [v for v in existing_versions if v.topic == topic]
+        
+        # 计算下一个版本号
+        if not topic_versions:
+            version_number = "1.0"
+        else:
+            # 获取最新版本号
+            latest_version = topic_versions[0]
+            major, minor = map(int, latest_version.version_number.split('.'))
+            # 优化生成：小版本号递增
+            version_number = f"{major}.{minor + 1}"
+
         # 保存版本
         version = await version_manager.save_version(
             user_id=request.user_id,
             content=generated_output,
             version_type=VersionType.OPTIMIZE,
-            version_number="1.0",
-            description="初始生成版本",
-            topic=request.input[:20] + ("..." if len(request.input) > 20 else ""),
+            version_number=version_number,
+            description="初始生成版本" if version_number == "1.0" else "优化生成",
+            topic=topic,
             framework_id=request.framework_id,
             framework_name=request.framework_id,
             original_input=request.input,

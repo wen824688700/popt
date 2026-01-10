@@ -9,6 +9,10 @@ interface Version {
   createdAt: string;
   description?: string;
   versionNumber: string;
+  topic?: string;
+  framework_id?: string;
+  framework_name?: string;
+  original_input?: string;
 }
 
 interface VersionHistoryProps {
@@ -203,6 +207,11 @@ export default function VersionHistory({
                       `}>
                         {getTypeLabel(version.type)}
                       </span>
+                      {version.topic && (
+                        <span className="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-300 line-clamp-1 max-w-[150px]" title={version.topic}>
+                          {version.topic}
+                        </span>
+                      )}
                     </div>
 
                     {version.description && (

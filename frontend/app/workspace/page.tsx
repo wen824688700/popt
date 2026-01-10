@@ -349,10 +349,24 @@ export default function WorkspacePage() {
 
   // 获取对比的两个版本
   const comparisonVersions = selectedVersionIds.length === 2
-    ? {
-        old: versions.find(v => v.id === selectedVersionIds[0]),
-        new: versions.find(v => v.id === selectedVersionIds[1]),
-      }
+    ? (() => {
+        const version1 = versions.find(v => v.id === selectedVersionIds[0]);
+        const version2 = versions.find(v => v.id === selectedVersionIds[1]);
+        
+        if (!version1 || !version2) return null;
+        
+        // 比较版本号，确定新旧版本
+        const [major1, minor1] = version1.versionNumber.split('.').map(Number);
+        const [major2, minor2] = version2.versionNumber.split('.').map(Number);
+        
+        // 比较大版本号，如果相同则比较小版本号
+        const isVersion1Newer = major1 > major2 || (major1 === major2 && minor1 > minor2);
+        
+        return {
+          old: isVersion1Newer ? version2 : version1,
+          new: isVersion1Newer ? version1 : version2,
+        };
+      })()
     : null;
 
   return (
