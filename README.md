@@ -2,6 +2,9 @@
 
 > 基于 57 个经过验证的 Prompt 工程框架，智能匹配最佳方案，3 分钟生成专业级提示词
 
+
+📖 [查看部署指南](DEPLOY_NOW.md) | [修复详情](docs/VERCEL_DEPLOYMENT_FIX.md)
+
 ## ✨ 特性
 
 - 🎯 **智能框架匹配** - 从 57 个 Prompt 框架中自动推荐最合适的方案
@@ -9,6 +12,7 @@
 - 📝 **可视化工作台** - 实时预览和编辑优化效果
 - 🔄 **版本管理** - 保存历史版本，支持一键回滚
 - 📎 **附件支持** - 上传参考文档提供更多上下文
+- 🔐 **多种登录方式** - 支持 Google 登录和手机号验证码登录
 - 🚀 **完全免费部署** - 基于 Vercel Serverless 架构
 
 
@@ -19,7 +23,7 @@
 - **Backend**: Vercel Serverless Functions (Python)
 - **Database**: Supabase (PostgreSQL)
 - **LLM**: DeepSeek API
-- **Auth**: Supabase Auth
+- **Auth**: Supabase Auth (Google + Phone)
 
 ## 📁 项目结构
 
@@ -31,11 +35,7 @@ prompt-optimizer-mvp/
 │   ├── lib/           # 工具函数和状态管理
 │   └── api/           # Serverless Functions (Python)
 ├── backend/           # FastAPI 后端（本地开发用）
-├── docs/              # 文档
-│   ├── GOOGLE_LOGIN_DEPLOYMENT.md  # Google 登录部署指南
-│   ├── AUTH_ARCHITECTURE.md        # 认证架构说明
-│   └── TESTING_GUIDE.md            # 测试指南
-└── skills-main/       # 57 个 Prompt 框架资料
+└── skills-main/       # Prompt 框架资料
 ```
 
 
