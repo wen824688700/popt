@@ -76,6 +76,15 @@ export const useAuthStore = create<AuthState>()(
             return;
           }
 
+          // 先检查 localStorage 中是否有用户信息（邮箱验证码登录）
+          const storedState = get();
+          if (storedState.user && storedState.isAuthenticated) {
+            console.log('✅ 从 localStorage 恢复用户状态');
+            set({ isLoading: false });
+            return;
+          }
+
+          // 如果 localStorage 没有，再检查 Supabase session（Google 登录）
           const supabase = createClient();
           
           // 获取当前会话
@@ -88,13 +97,17 @@ export const useAuthStore = create<AuthState>()(
             set({ user: null, isAuthenticated: false, isLoading: false });
           }
 
-          // 监听认证状态变化
+          // 监听认证状态变化（仅用于 Google 登录）
           supabase.auth.onAuthStateChange((_event, session) => {
             if (session?.user) {
               const user = mapSupabaseUser(session.user, get().user?.accountType || 'free');
               set({ user, isAuthenticated: true, isLoading: false });
             } else {
-              set({ user: null, isAuthenticated: false, isLoading: false });
+              // 只有在没有邮箱验证码登录状态时才清除
+              const storedState = get();
+              if (!storedState.user) {
+                set({ user: null, isAuthenticated: false, isLoading: false });
+              }
             }
           });
         } catch (error) {
