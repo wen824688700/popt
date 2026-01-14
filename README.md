@@ -36,9 +36,6 @@ prompt-optimizer-mvp/
 └── skills-main/       # Prompt 框架资料
 ```
 
-📖 [查看部署指南](DEPLOY_NOW.md) | [修复详情](docs/VERCEL_DEPLOYMENT_FIX.md)
-
-
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！

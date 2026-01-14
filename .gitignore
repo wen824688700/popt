@@ -70,8 +70,14 @@ Agent.md
 # Documentation with sensitive info
 docs/
 
-# 测试脚本（包含敏感信息）
+# 测试脚本（可能包含敏感信息）
 check_supabase_tables.py
 test_resend_api.py
 test_production_api.py
 diagnose_email_auth.py
+test_registration.py
+get_verification_code.py
+confirm_user_email.py
+test_*.py
+*_test.py
+backend/tests

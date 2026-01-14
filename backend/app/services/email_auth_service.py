@@ -182,14 +182,14 @@ class EmailAuthService:
             if not is_available:
                 return False, None, "用户名已被使用"
             
-            # 使用 Supabase Auth 注册
-            response = self.supabase.auth.sign_up({
+            # 使用 Admin API 创建已验证的用户
+            # 这样可以绕过 Supabase 的邮箱确认要求
+            response = self.supabase.auth.admin.create_user({
                 "email": email,
                 "password": password,
-                "options": {
-                    "data": {
-                        "username": username
-                    }
+                "email_confirm": True,  # 直接标记为已确认
+                "user_metadata": {
+                    "username": username
                 }
             })
             
