@@ -50,6 +50,8 @@ async def get_versions(user_id: str = "test_user", limit: int = 20):
     返回用户最近的版本列表（最多20个）
     """
     try:
+        from datetime import UTC
+        
         versions = await version_manager.get_versions(
             user_id=user_id,
             limit=limit
@@ -61,7 +63,7 @@ async def get_versions(user_id: str = "test_user", limit: int = 20):
                 user_id=v.user_id,
                 content=v.content,
                 type=v.type.value,
-                created_at=v.created_at.isoformat(),
+                created_at=(v.created_at.replace(tzinfo=UTC) if not v.created_at.tzinfo else v.created_at).isoformat(),
                 formatted_title=v.formatted_title,
                 version_number=v.version_number,
                 description=v.description,

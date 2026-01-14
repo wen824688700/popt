@@ -34,6 +34,12 @@ class Version(BaseModel):
     framework_name: Optional[str] = None
     original_input: Optional[str] = None
 
+    model_config = {
+        "json_encoders": {
+            datetime: lambda v: v.isoformat() if v.tzinfo else v.replace(tzinfo=UTC).isoformat()
+        }
+    }
+
     @property
     def formatted_title(self) -> str:
         """返回格式化的标题：YYYY-MM-DD HH:mm:ss · 保存/优化"""
