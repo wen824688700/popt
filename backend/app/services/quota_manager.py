@@ -372,8 +372,7 @@ class QuotaManager:
             # 获取今天的日期
             quota_date = self._get_user_date(user_timezone_offset)
             
-            # 尝试更新现有记录（使用 UPSERT）
-            # PostgreSQL 的 ON CONFLICT 语法通过 Supabase 的 upsert 参数实现
+            # 使用 upsert 操作（如果记录存在则更新，否则插入）
             response = await client.post(
                 "/user_quotas",
                 json={
@@ -382,25 +381,10 @@ class QuotaManager:
                     "used_count": status.used + 1,
                     "account_type": account_type
                 },
-                params={
-                    "on_conflict": "user_id,quota_date"
+                headers={
+                    "Prefer": "resolution=merge-duplicates"
                 }
             )
-            
-            # 如果记录已存在，使用 PATCH 更新
-            if response.status_code == 409 or response.status_code == 400:
-                # 记录已存在，使用 PATCH 更新
-                response = await client.patch(
-                    "/user_quotas",
-                    json={
-                        "used_count": status.used + 1,
-                        "updated_at": datetime.now(UTC).isoformat()
-                    },
-                    params={
-                        "user_id": f"eq.{user_id}",
-                        "quota_date": f"eq.{quota_date}"
-                    }
-                )
             
             if response.status_code not in [200, 201, 204]:
                 logger.error(f"Failed to consume quota: {response.status_code} - {response.text}")
