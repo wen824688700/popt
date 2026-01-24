@@ -92,15 +92,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
     try {
       const response = await apiClient.login(identifier.trim(), password);
       
-      setUser({
-        id: response.user.id,
-        email: response.user.email,
-        username: response.user.username,
-        accountType: response.user.accountType,
-      });
-      
-      addToast('登录成功', 'success');
-      handleClose();
+      if (response.user) {
+        setUser({
+          id: response.user.id,
+          email: response.user.email,
+          username: response.user.username,
+          accountType: response.user.accountType,
+        });
+        
+        addToast('登录成功', 'success');
+        handleClose();
+      } else {
+        addToast('登录失败：未返回用户信息', 'error');
+      }
       
     } catch (error) {
       addToast(
@@ -170,15 +174,19 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         password
       );
       
-      setUser({
-        id: response.user.id,
-        email: response.user.email,
-        username: response.user.username,
-        accountType: response.user.accountType,
-      });
-      
-      addToast('注册成功', 'success');
-      handleClose();
+      if (response.user) {
+        setUser({
+          id: response.user.id,
+          email: response.user.email,
+          username: response.user.username,
+          accountType: response.user.accountType,
+        });
+        
+        addToast('注册成功', 'success');
+        handleClose();
+      } else {
+        addToast('注册失败：未返回用户信息', 'error');
+      }
       
     } catch (error) {
       addToast(

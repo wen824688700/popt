@@ -102,6 +102,46 @@ export interface FeedbackRequest {
   content: string;
 }
 
+// 邮箱认证相关类型
+export interface SendCodeResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface VerifyCodeResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    id: string;
+    email: string;
+    username: string;
+    accountType: 'free' | 'pro';
+  };
+  access_token?: string;
+}
+
+export interface LoginResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    id: string;
+    email: string;
+    username: string;
+    accountType: 'free' | 'pro';
+  };
+  access_token?: string;
+}
+
+export interface ResetPasswordResponse {
+  success: boolean;
+  message: string;
+}
+
+export interface CheckUsernameResponse {
+  available: boolean;
+  message: string;
+}
+
 type ErrorDetail = unknown;
 
 function errorDetailToMessage(detail: ErrorDetail): string | null {
